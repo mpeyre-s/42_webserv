@@ -1,9 +1,13 @@
 #include "../includes/Webserv.hpp"
 
-Webserv::Webserv(std::vector<Server*> list_servers) : _list_servers(list_servers) {}
+Webserv::Webserv(std::vector<Server*> list_servers) : _list_servers(list_servers) {
+	std::cout << "\033[32m[INFO] Server is ready to run\033[0m" << std::endl;
+}
 
-Webserv::~Webserv() {}
+Webserv::~Webserv() {
+	std::cout << "\033[32m[INFO] Server is killed\033[0m" << std::endl;
+}
 
 void Webserv::run() {
-	std::cout << "Server '" << _list_servers[0]->getServerName() << "' started succesfully!" <<std::endl;
+	std::cout << "\033[32m[INFO] Server is running\033[0m" <<std::endl;
 }

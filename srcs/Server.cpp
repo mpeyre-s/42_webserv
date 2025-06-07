@@ -1,5 +1,8 @@
 #include "../includes/Server.hpp"
-#include <vector>
+
+Location::Location() : alias(false), client_body_buffer_size(0) {}
+
+Location::~Location() {}
 
 Server::Server() {
     server_name = "webserv";
@@ -49,4 +52,28 @@ Server::~Server() {}
 
 std::string Server::getServerName() const {
 	return server_name;
+}
+
+std::string Server::getHost() const {
+	return host;
+}
+
+int Server::getPort() const {
+	return port;
+}
+
+std::string Server::getRoot() const {
+	return root;
+}
+
+std::string Server::getIndex() const {
+	return index;
+}
+
+const std::vector<std::string>& Server::getAllowedMethods() const {
+	return allowed_methods;
+}
+
+const std::map<std::string, Location>& Server::getLocations() const {
+	return locations;
 }
