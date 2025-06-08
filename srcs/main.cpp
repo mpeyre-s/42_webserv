@@ -71,7 +71,7 @@ int main(int ac, char **av) {
 			std::vector<Server*> list_servers = configParsing.createServerList();
 
 			// parsing debug (file.conf)
-			printServerVector(list_servers);
+			//printServerVector(list_servers);
 
 			Webserv webserv(list_servers);
 			webserv.run();
