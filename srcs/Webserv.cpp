@@ -61,14 +61,9 @@ void	Webserv::prepareFd()
 	}
 }
 
-bool Webserv::isClients(int fd) {
-	std::map<int, ClientConnexion*>::iterator it = _clients.find(fd);
-		return (it != _clients.end());
-}
-
 void Webserv::handleNewConnexion(int server_fd)
 {
-	// Gestion d'un nouvel fd
+	// Gestion d'un nouvel fd client
 	sockaddr_in client_addr;
 	socklen_t client_len = sizeof(client_addr);
 
@@ -85,11 +80,45 @@ void Webserv::handleNewConnexion(int server_fd)
 	_fds.push_back(client_poll);
 
 
-	// Création de l'instance de la class ClientConnexion
-
-	ClientConnexion *client = new ClientConnexion(client_fd, _correspondingServ[server_fd]);
+	// Création de l'instance de la class ClientConnexion pour gérer ce nouveau client
+	ClientConnexion *client = new ClientConnexion(client_fd, _correspondingServ[server_fd], TO_READ);
 	_clients[client_fd] = client;
+}
 
+void	Webserv::handleClientReading(int fd)
+{
+	ClientConnexion *client = _clients[fd];
+	char			buf[BUFFER_SIZE];
+
+	int bytes = read(fd, buf, BUFFER_SIZE);
+	if (bytes > 0)
+	{
+		client->appendToBuffer(buf, bytes);
+		if (client->getState() == DONE_READING)
+		{
+			// LES PROBLEMES ICI MATHISSSSSSSSS => il faut appeler les class pour en finir avec ce client pas fidele
+			client->setState(TO_WRITE);
+		}
+	}
+	else if (bytes == 0)
+		removeClientIfPossible(fd);
+	else
+	{
+		// Rien à lire pour l’instant : on attendra un autre POLLIN (ne devrait jamais arriver)
+		if (errno == EAGAIN || errno == EWOULDBLOCK)
+			return ;
+		else
+		{
+			std::cerr << "Erreur read pour client au fd : " << fd << std::endl;
+			removeClientIfPossible(fd);
+		}
+	}
+
+}
+
+bool Webserv::isClients(int fd) {
+	std::map<int, ClientConnexion*>::iterator it = _clients.find(fd);
+		return (it != _clients.end());
 }
 
 void Webserv::positivPoll()
@@ -98,12 +127,12 @@ void Webserv::positivPoll()
 	{
 		if (_fds[i].revents != 0)
 		{
-			if (isClients(_fds[i].fd) == false) // dans ce cas il y a un changement d'état sur le serveur
+			if (isClients(_fds[i].fd) == false) // => serveur reçoit une co
 			{
 				if (_fds[i].revents & POLLIN)
-					handleNewConnexion(_fds[i].fd); // pour créer une nouvelle instance de ClientConnexion
+					handleNewConnexion(_fds[i].fd);
 			}
-			else if (isClients(_fds[i].fd) == true) // Dans ce cas le client veut effectuer une action
+			else if (isClients(_fds[i].fd) == true) // => client veut faire un truc
 			{
 				if (_fds[i].revents & POLLIN)
 					handleClientReading(_fds[i].fd);
@@ -144,6 +173,5 @@ void Webserv::run()
 // 	return ;
 // }
 
-// void	Webserv::handleClientReading(int i) { (void)i; return ;}
 // void	Webserv::handleClientWriting(int i) { (void)i; return ;}
 // void	Webserv::removeClientIfPossible(int i){ (void)i; return ;}

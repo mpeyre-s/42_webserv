@@ -12,6 +12,7 @@
 #include "ClientConnexion.hpp"
 
 #define TIMEOUT 1000 // le delai pour envoyer une requete
+static const size_t BUFFER_SIZE = 2048;
 
 /*
 struct pollfd {
@@ -24,7 +25,7 @@ struct pollfd {
 struct FdInfo
 {
 	int			fd;
-	sockaddr_in	addr; // bind struct
+	sockaddr_in	addr;
 };
 
 
@@ -47,9 +48,9 @@ class Webserv {
 		void	handleNewConnexion(int);
 
 		//Client
-		void	handleClientReading(int i);
-		void	handleClientWriting(int i);
-		void	removeClientIfPossible(int i);
+		void	handleClientReading(int i); // TODO mais need Mathis
+		void	handleClientWriting(int i); // TODO
+		void	removeClientIfPossible(int i); // TODO
 
 		// poll
 		void	positivPoll();
@@ -60,7 +61,7 @@ class Webserv {
 
 	public:
 		Webserv(std::vector<Server*> list_servers);
-		~Webserv();
+		~Webserv(); // TODO
 
 		void run();
 };
