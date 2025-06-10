@@ -4,6 +4,8 @@
 #include <iostream>
 
 #include "Server.hpp"
+#include "Request.hpp"
+#include "Response.hpp"
 
 class Webserv {
 private:
