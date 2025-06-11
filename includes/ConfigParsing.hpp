@@ -10,12 +10,14 @@
 class ConfigParsing {
 private:
 	std::vector<Server*> 					_list_servers;
-	// std::vector<std::string>				_serverBlock;
-	std::vector<std::vector<std::string> >	_serverList;
+	std::vector<std::vector<std::string> >	_serverBlocks;
+	std::vector<std::vector<std::string> >	_tokenizedBlock;
 
 public:
 	ConfigParsing(std::string &configFile);
 	~ConfigParsing();
 
-	std::vector<Server*> createServerList();
+	void 					parseServerBlock(const std::vector<std::string>& block, Server* server);
+	std::vector<std::string> tokenizeLine(const std::string& line);
+	std::vector<Server*>	createServerList();
 };
