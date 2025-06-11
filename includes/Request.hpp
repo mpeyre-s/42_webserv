@@ -26,7 +26,7 @@ public:
 
 	Request &operator=(const Request &other);
 
-	Response *process(std::vector<Server*> list_servers);
+	Response *process(Server* server);
 
 	std::string getMethodType() const;
 	std::string getPathToResource() const;

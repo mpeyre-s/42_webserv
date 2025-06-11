@@ -6,6 +6,10 @@
 #include <sstream>
 #include <fstream>
 #include <sys/stat.h>
+#include <ctime>
+#include <fcntl.h>
+#include <unistd.h>
+#include <dirent.h>
 
 #include "../includes/Server.hpp"
 
@@ -13,8 +17,8 @@ class Request;
 
 class Response {
 private:
-	Request *_obj;
-	std::vector<Server*> _list_servers;
+	Request* _request;
+	Server* _server;
 
 	// Response
 	std::string _http_version;
@@ -24,7 +28,7 @@ private:
 	std::string _body;
 
 public:
-	Response(Request *obj, std::vector<Server*> list_servers, int status);
+	Response(Request *request,Server* server, int status);
 	~Response();
 
 	std::string getStringResponse();

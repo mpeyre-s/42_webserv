@@ -66,14 +66,14 @@ Request::Request(std::string &raw) {
 	}
 }
 
-Response* Request::process(std::vector<Server*> list_servers) {
+Response* Request::process(Server* server) {
 
 	Request *request_copy = new Request(*this);
 
 	if (_parsing_error)
-		return new Response(request_copy, list_servers, 400);
+		return new Response(request_copy, server, 400);
 	else
-		return new Response(request_copy, list_servers, 200);
+		return new Response(request_copy, server, 200);
 }
 
 Request &Request::operator=(const Request &other) {
