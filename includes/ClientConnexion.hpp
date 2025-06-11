@@ -13,7 +13,9 @@ enum State
 	TO_READ,
 	READING,
 	DONE_READING,
-	TO_WRITE
+	TO_WRITE,
+	WRITING,
+	DONE_WRITING
 };
 
 class ClientConnexion
@@ -31,17 +33,26 @@ class ClientConnexion
 		Request		*_request;
 
 		bool	isDoneReading();
+		bool 	isDoneWriting();
+
 		bool	checkChunked(size_t);
 		bool	checkContentLength(size_t, size_t);
+
 	public:
 		ClientConnexion(int, Server *, State);
 		~ClientConnexion(); // TODO
 
 		void	appendToBuffer(char *, int);
-		State	getState();
-		std::string &getBufferIn();
+		void	removeFromBuffer(int bytesSent);
+
+		State		getState();
+		Server		*getServer();
+		std::string	&getBufferIn();
+		std::string	&getBufferOut();
+
 		void	setBufferOut(std::string buff);
-		Server *getServer();
 		void	setState(State);
 		void	setRequest(Request *);
+
+		void	clearBuffer();
 };

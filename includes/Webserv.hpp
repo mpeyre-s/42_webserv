@@ -41,6 +41,7 @@ class Webserv {
 		// fd
 		void	prepareSockets();
 		void	prepareFd();
+		void	changeEvents(int, short);
 
 		// utils
 		bool	isClients(int i);

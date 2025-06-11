@@ -61,6 +61,23 @@ void	Webserv::prepareFd()
 	}
 }
 
+void	Webserv::changeEvents(int fd, short POLL)
+{
+	for (size_t i = 0; i < _fds.size(); ++i)
+	{
+		if (_fds[i].fd == fd)
+		{
+			_fds[i].events = POLL;
+			break;
+		}
+	}
+}
+
+bool Webserv::isClients(int fd) {
+	std::map<int, ClientConnexion*>::iterator it = _clients.find(fd);
+		return (it != _clients.end());
+}
+
 void Webserv::handleNewConnexion(int server_fd)
 {
 	// Gestion d'un nouvel fd client
@@ -96,14 +113,30 @@ void	Webserv::handleClientReading(int fd)
 		client->appendToBuffer(buf, bytes);
 		if (client->getState() == DONE_READING)
 		{
-			// LES PROBLEMES ICI MATHISSSSSSSSS => il faut appeler les class pour en finir avec ce client fidele
+			//TEST
+			std::cout << "=== REQUÊTE REÇUE ===" << std::endl;
+        	std::cout << client->getBufferIn() << std::endl;
+        	std::cout << "===================" << std::endl;
+
+
 			Request *request = new Request(client->getBufferIn());
 			Response* response = request->process(client->getServer());
+
+			//TEST
+			std::cout << "=== RÉPONSE GÉNÉRÉE ===" << std::endl;
+        	std::cout << response->getStringResponse() << std::endl;
+        	std::cout << "=====================" << std::endl;
+
+
 			client->setBufferOut(response->getStringResponse());
 
-			//client->setRequest(request);
-
+			delete request;
+			delete response;
 			client->setState(TO_WRITE);
+
+			changeEvents(fd, POLLOUT);
+
+			//estd::cout << "======== buffer out ========" << std::endl << client->getBufferOut() << std::endl;
 		}
 	}
 	else if (bytes == 0)
@@ -115,19 +148,43 @@ void	Webserv::handleClientReading(int fd)
 			return ;
 		else
 		{
-			std::cerr << "Erreur read pour client au fd : " << fd << std::endl;
+			std::cerr << "Erreur read pour client dont le fd est : " << fd << std::endl;
 			removeClientIfPossible(fd);
 		}
 	}
-
 }
 
-bool Webserv::isClients(int fd) {
-	std::map<int, ClientConnexion*>::iterator it = _clients.find(fd);
-		return (it != _clients.end());
+void	Webserv::handleClientWriting(int fd)
+{
+	ClientConnexion *client = _clients[fd];
+	std::string &buffer = client->getBufferOut();
+	int bytesSent = send(fd, buffer.c_str(), buffer.size(), 0);
+	if (bytesSent > 0)
+	{
+		client->removeFromBuffer(bytesSent);
+		if (client->getState() == DONE_WRITING)
+		{
+			// il faut gerer plein de choses genre keep alive etc etc etc que je verrai plus tard
+			client->clearBuffer();
+			changeEvents(fd, POLLIN);
+		}
+	}
+	else if (bytesSent == 0)
+		removeClientIfPossible(fd);
+	else
+	{
+		// Rien à écrire pour l’instant : on attendra un autre POLLIN (ne devrait jamais arriver)
+		if (errno == EAGAIN || errno == EWOULDBLOCK)
+			return ;
+		else
+		{
+			std::cerr << "Erreur write pour client dont le fd est : " << fd << std::endl;
+			removeClientIfPossible(fd);
+		}
+	}
 }
 
-void Webserv::positivPoll()
+void Webserv::positivPoll() // Je vais avoir un probleme ici. je parcours une boucle mais si je supprime un fd je vais avoir des acces hors limite
 {
 	for (size_t i = 0; i < _fds.size(); ++i)
 	{
@@ -179,5 +236,7 @@ void Webserv::timeoutPoll() {
 	return ;
 }
 
-void	Webserv::handleClientWriting(int i) { (void)i; return ;}
+
 void	Webserv::removeClientIfPossible(int i){ (void)i; return ;}
+
+

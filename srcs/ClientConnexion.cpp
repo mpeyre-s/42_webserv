@@ -23,6 +23,10 @@ std::string	&ClientConnexion::getBufferIn() {
 	return bufferIn;
 }
 
+std::string	&ClientConnexion::getBufferOut() {
+	return bufferOut;
+}
+
 void	ClientConnexion::setState(State state) {
 	_state = state;
 }
@@ -33,6 +37,11 @@ void	ClientConnexion::setRequest(Request *request) {
 
 void ClientConnexion::setBufferOut(std::string buff) {
 	bufferOut = buff;
+}
+
+void	ClientConnexion::clearBuffer() {
+	bufferIn.clear();
+	bufferOut.clear();
 }
 
 bool	ClientConnexion::checkChunked(size_t body_start)
@@ -82,6 +91,22 @@ bool	ClientConnexion::isDoneReading()
 	return false ;
 }
 
+bool	ClientConnexion::isDoneWriting()
+{
+	if (bufferOut.size() > 0)
+		return false ;
+	return true ;
+}
+
+void	ClientConnexion::removeFromBuffer(int bytesSent)
+{
+	bufferOut.erase(0, bytesSent);
+	if (!isDoneWriting())
+		_state = WRITING;
+	else
+		_state = DONE_WRITING;
+}
+
 void	ClientConnexion::appendToBuffer(char *buffer, int len)
 {
 	bufferIn.append(buffer, len);
@@ -90,3 +115,4 @@ void	ClientConnexion::appendToBuffer(char *buffer, int len)
 	else
 		_state = DONE_READING;
 }
+
