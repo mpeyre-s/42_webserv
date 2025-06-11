@@ -101,6 +101,8 @@ void	Webserv::handleClientReading(int fd)
 			Response* response = request->process(client->getServer());
 			client->setBufferOut(response->getStringResponse());
 
+			std::cout << "===== BUFFER OUT =====" << std::endl << response->getStringResponse() << std::endl;
+
 			//client->setRequest(request);
 
 			client->setState(TO_WRITE);

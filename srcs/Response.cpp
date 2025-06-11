@@ -1,6 +1,15 @@
 #include "../includes/Response.hpp"
 #include "../includes/Request.hpp"
 
+static int getContentLengthFromServerConfig(std::map<std::string, Location> nested_locations, std::string path_to_ressource) {
+	for (std::map<std::string, Location>::iterator it = nested_locations.begin(); it != nested_locations.end(); ++it) {
+		if (it->first == path_to_ressource) {
+			return it->second.client_body_buffer_size;
+		}
+	}
+	return 0;
+}
+
 static std::string getContentTypeFromPath(std::string &path) {
 	const char *extensions[] = {".html", ".css", ".js", ".json", ".xml", ".bin", ".exe", ".dll", ".jpg", ".jpeg", ".png", ".gif", ".mp3", ".mp4", ".pdf", ".zip", ".txt", NULL};
 	for (size_t i = 0; extensions[i]; i++) {
@@ -118,6 +127,7 @@ Response::Response(Request *request, Server* server, int status) : _request(requ
 	std::string internal_server_error_path = "resources/internal_server_error.html";
 	std::string not_found_path = "resources/not_found.html";
 	std::string auto_index_path = "resources/auto_index.html";
+	std::string request_entity_too_large_path = "resources/request_entity_too_large.html";
 
 	// default params
 	_http_version = "HTTP/1.1";
@@ -132,7 +142,16 @@ Response::Response(Request *request, Server* server, int status) : _request(requ
 		_headers["Content-Length"] = intToStdString(getFileOctetsSize(bad_request_path));
 		_body = pathfileToStringBackslashs(bad_request_path);
 		return;
-	} else if (_status != 200) {
+	}
+	else if ((int)request->getBody().size() > getContentLengthFromServerConfig(server->getLocations(), request->getPathToResource())) {
+		_status = 413;
+		_text_status = "Request Entity Too Large";
+		_headers["Content-Type"] = "text/html";
+		_headers["Content-Length"] = intToStdString(getFileOctetsSize(request_entity_too_large_path));
+		_body = pathfileToStringBackslashs(request_entity_too_large_path);
+		return;
+	}
+	else if (_status != 200) {
 		_status = 500;
 		_text_status = "Internal Server Error";
 		_headers["Content-Type"] = "text/html";
@@ -160,8 +179,7 @@ Response::Response(Request *request, Server* server, int status) : _request(requ
 		} else {
 			_headers["Content-Type"] = "text/html";
 			_headers["Content-Length"] = intToStdString(getFileOctetsSize(auto_index_path));
-			_body = pathfileToStringBackslashs(internal_server_error_path);
-			_body = pathfileToStringBackslashs(internal_server_error_path);
+			_body = pathfileToStringBackslashs(auto_index_path);
 			return;
 		}
 	}
