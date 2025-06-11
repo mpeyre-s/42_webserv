@@ -96,7 +96,7 @@ void	Webserv::handleClientReading(int fd)
 		client->appendToBuffer(buf, bytes);
 		if (client->getState() == DONE_READING)
 		{
-			// LES PROBLEMES ICI MATHISSSSSSSSS => il faut appeler les class pour en finir avec ce client pas fidele
+			// LES PROBLEMES ICI MATHISSSSSSSSS => il faut appeler les class pour en finir avec ce client fidele
 			client->setState(TO_WRITE);
 		}
 	}
@@ -165,13 +165,13 @@ void Webserv::run()
 }
 
 
-// void Webserv::negativPoll() {
-// 	return ;
-// }
+void Webserv::negativPoll() {
+	return ;
+}
 
-// void Webserv::timeoutPoll() {
-// 	return ;
-// }
+void Webserv::timeoutPoll() {
+	return ;
+}
 
-// void	Webserv::handleClientWriting(int i) { (void)i; return ;}
-// void	Webserv::removeClientIfPossible(int i){ (void)i; return ;}
+void	Webserv::handleClientWriting(int i) { (void)i; return ;}
+void	Webserv::removeClientIfPossible(int i){ (void)i; return ;}

@@ -2,6 +2,7 @@
 
 #include <string>
 #include <iostream>
+#include <sstream>
 #include "Server.hpp"
 
 
@@ -21,9 +22,12 @@ class ClientConnexion
 		State		_state;
 		std::string	bufferIn;
 		std::string	bufferOut;
-		// Il faut aussi faire un time ici
+		int	_bodySize;
+		// Il faut aussi faire un time ici TODO
 
-		bool	isDoneReading(); // TODO
+		bool	isDoneReading();
+		bool	checkChunked(size_t);
+		bool	checkContentLength(size_t, size_t);
 	public:
 		ClientConnexion(int, Server *, State);
 		~ClientConnexion(); // TODO
