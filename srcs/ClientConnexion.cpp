@@ -2,6 +2,8 @@
 
 ClientConnexion::ClientConnexion(int fd, Server *server, State state) : _fd(fd), _server(server), _state(state), _bodySize(0) {
 	std::cout << "New Client fd = '"<< _fd << "' has been created" << std::endl;
+	_request = NULL;
+
 }
 
 ClientConnexion::~ClientConnexion() {
@@ -13,8 +15,24 @@ State	ClientConnexion::getState() {
 	return _state;
 }
 
+Server	*ClientConnexion::getServer() {
+	return _server;
+}
+
+std::string	&ClientConnexion::getBufferIn() {
+	return bufferIn;
+}
+
 void	ClientConnexion::setState(State state) {
 	_state = state;
+}
+
+void	ClientConnexion::setRequest(Request *request) {
+	_request = request;
+}
+
+void ClientConnexion::setBufferOut(std::string buff) {
+	bufferOut = buff;
 }
 
 bool	ClientConnexion::checkChunked(size_t body_start)

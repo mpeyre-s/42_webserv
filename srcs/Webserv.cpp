@@ -97,6 +97,12 @@ void	Webserv::handleClientReading(int fd)
 		if (client->getState() == DONE_READING)
 		{
 			// LES PROBLEMES ICI MATHISSSSSSSSS => il faut appeler les class pour en finir avec ce client fidele
+			Request *request = new Request(client->getBufferIn());
+			Response* response = request->process(client->getServer());
+			client->setBufferOut(response->getStringResponse());
+
+			//client->setRequest(request);
+
 			client->setState(TO_WRITE);
 		}
 	}

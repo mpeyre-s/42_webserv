@@ -1,0 +1,107 @@
+#include "../includes/Request.hpp"
+#include "../includes/Response.hpp"
+
+std::vector<std::string> split(const std::string &str, std::string delimiter) {
+	std::vector<std::string> result;
+	size_t start_pos = 0;
+	size_t end_pos = str.find(delimiter);
+	while (end_pos != std::string::npos) {
+		result.push_back(str.substr(start_pos, end_pos - start_pos));
+		start_pos = end_pos + 1;
+		end_pos = str.find(delimiter, start_pos);
+	}
+	if (start_pos < str.length()) {
+		result.push_back(str.substr(start_pos));
+	}
+	return result;
+}
+
+Request::Request(std::string &raw) {
+	_parsing_error = false;
+	std::vector<std::string> lines = split(raw, "\r\n");
+
+	// parsing request line (1st line)
+	std::vector<std::string> request_line_splited = split(lines[0], " ");
+	if (request_line_splited.size() != 3) {
+		_parsing_error = true;
+		return;
+	}
+	if (request_line_splited[0] != "GET" && request_line_splited[0] != "POST" && request_line_splited[0] != "DELETE") {
+		_parsing_error = true;
+		return;
+	}
+	_method_type = request_line_splited[0];
+	if (request_line_splited[1].empty() || request_line_splited[1][0] != '/') {
+		_parsing_error = true;
+		return;
+	}
+	_path_to_resource = request_line_splited[1];
+	if (request_line_splited[2] != "HTTP/1.1") {
+		_parsing_error = true;
+		return;
+	}
+	_http_version = request_line_splited[2];
+
+	// headers parsing (map)
+	size_t body_start_pos = 2;
+	for (size_t i = 1; lines[i].length() != 1; i++) {
+		size_t start_pos = 0;
+		size_t end_pos = lines[i].find(":");
+		size_t end_string_pos = lines[i].length();
+		std::string key = lines[i].substr(start_pos + 1, end_pos - 1);
+		std::string value = lines[i].substr(end_pos + 2, end_string_pos - 1);
+		_headers[key] = value;
+		body_start_pos++;
+	}
+
+	// body parsing raw -> next double \r\n
+	if (body_start_pos == lines.size())
+		return;
+
+	for (size_t i = body_start_pos; i < lines.size(); i++) {
+		if (i == body_start_pos) {
+			_body = lines[i].substr(1, lines[i].length());
+		} else
+			_body.append(lines[i]);
+	}
+}
+
+Response* Request::process(Server* server) {
+
+	Request *request_copy = new Request(*this);
+
+	if (_parsing_error)
+		return new Response(request_copy, server, 400);
+	else
+		return new Response(request_copy, server, 200);
+}
+
+Request &Request::operator=(const Request &other) {
+	if (this != &other) {
+		_parsing_error = other._parsing_error;
+		_method_type = other._method_type;
+		_path_to_resource = other._path_to_resource;
+		_http_version = other._http_version;
+		_headers = other._headers;
+		_body = other._body;
+	}
+	return *this;
+}
+
+Request::~Request() {}
+
+std::string Request::getMethodType() const {
+	return _method_type;
+}
+
+std::string Request::getPathToResource() const {
+	return _path_to_resource;
+}
+
+std::map<std::string, std::string> Request::getHeaders() const {
+	return _headers;
+}
+
+std::string Request::getBody() const {
+	return _body;
+}

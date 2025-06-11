@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>WebServ</title>
+	<link rel="stylesheet" href="styles/index.css">
+</head>
+<body>
+	<header>
+		<img src="images/webserv.svg"></img>
+		<p>A simple and efficient web server implementation</p>
+	</header>
+
+	<nav>
+		<a href="/">Home</a>
+		<a href="/simulation">Simulation</a>
+		<a href="/services">Services</a>
+	</nav>
+
+	<main>
+		<section>
+			<h1>Welcome to WebServ</h2>
+			<p>This is a demonstration of a web server created for educational purposes.</p>
+			<p>This project aims to create an HTTP web server, with a focus on non-blocking behavior. Dive into the world of network programming and explore the fundamentals of web servers.</p>
+		</section>
+
+		<section>
+			<h2>Features</h2>
+			<ul>
+				<li>HTTP/1.1 protocol support</li>
+				<li>Multiple virtual servers</li>
+				<li>Default error pages</li>
+				<li>File upload capabilities</li>
+				<li>CGI execution</li>
+			</ul>
+		</section>
+	</main>
+
+	<footer>
+		<p>&copy; 2025 WebServ - By Hadrien Duflos (hduflos), Arnaud Fontan (afontan) & Mathis Peyre Schortzen (mpeyre-s) - No rights reserved</p>
+	</footer>
+</body>
+<style>
+	body {
+	font-family: Arial, sans-serif;
+	line-height: 1.6;
+	margin: 0;
+	padding: 0;
+	color: #333;
+	}
+
+	header {
+		background-color: #4a89dc;
+		color: white;
+		text-align: center;
+		padding: 2rem 0;
+	}
+
+	nav {
+		background-color: #333;
+		color: white;
+		padding: 1rem;
+		text-align: center;
+	}
+
+	nav a {
+		color: white;
+		margin: 0 1rem;
+		text-decoration: none;
+		position: relative;
+	}
+
+	nav a:hover {
+		color: white;
+	}
+
+	nav a::after {
+		content: '';
+		position: absolute;
+		width: 0;
+		height: 1px;
+		bottom: 0;
+		left: 0;
+		background-color: white;
+		transition: width 0.3s ease;
+	}
+
+	nav a:hover::after {
+		width: 100%;
+	}
+
+	main {
+		max-width: 800px;
+		margin: 2rem auto;
+		padding: 0 1rem;
+	}
+
+	footer {
+		background-color: #333;
+		color: white;
+		text-align: center;
+		padding: 1rem;
+		position: fixed;
+		bottom: 0;
+		width: 100%;
+	}
+</style>
+</html>

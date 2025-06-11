@@ -10,6 +10,8 @@
 #include <map>
 #include "Server.hpp"
 #include "ClientConnexion.hpp"
+#include "Request.hpp"
+#include "Response.hpp"
 
 #define TIMEOUT 1000 // le delai pour envoyer une requete
 static const size_t BUFFER_SIZE = 2048;
@@ -27,7 +29,6 @@ struct FdInfo
 	int			fd;
 	sockaddr_in	addr;
 };
-
 
 class Webserv {
 	private:

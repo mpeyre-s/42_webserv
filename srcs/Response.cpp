@@ -1,0 +1,200 @@
+#include "../includes/Response.hpp"
+#include "../includes/Request.hpp"
+
+static std::string getContentTypeFromPath(std::string &path) {
+	const char *extensions[] = {".html", ".css", ".js", ".json", ".xml", ".bin", ".exe", ".dll", ".jpg", ".jpeg", ".png", ".gif", ".mp3", ".mp4", ".pdf", ".zip", ".txt", NULL};
+	for (size_t i = 0; extensions[i]; i++) {
+		size_t pos = path.find(extensions[i]);
+		if (pos != std::string::npos && (pos + strlen(extensions[i]) == path.length())) {
+			if (strcmp(extensions[i], ".html") == 0) {
+				return "text/html";
+			} else if (strcmp(extensions[i], ".css") == 0) {
+				return "text/css";
+			} else if (strcmp(extensions[i], ".js") == 0) {
+				return "application/javascript";
+			} else if (strcmp(extensions[i], ".json") == 0) {
+				return "application/json";
+			} else if (strcmp(extensions[i], ".xml") == 0) {
+				return "application/xml";
+			} else if (strcmp(extensions[i], ".bin") == 0 || strcmp(extensions[i], ".exe") == 0 || strcmp(extensions[i], ".dll") == 0) {
+				return "application/octet-stream";
+			} else if (strcmp(extensions[i], ".jpg") == 0 || strcmp(extensions[i], ".jpeg") == 0) {
+				return "image/jpeg";
+			} else if (strcmp(extensions[i], ".png") == 0) {
+				return "image/png";
+			} else if (strcmp(extensions[i], ".gif") == 0) {
+				return "image/gif";
+			} else if (strcmp(extensions[i], ".mp3") == 0) {
+				return "audio/mpeg";
+			} else if (strcmp(extensions[i], ".mp4") == 0) {
+				return "video/mp4";
+			} else if (strcmp(extensions[i], ".pdf") == 0) {
+				return "application/pdf";
+			} else if (strcmp(extensions[i], ".zip") == 0) {
+				return "application/zip";
+			} else if (strcmp(extensions[i], ".txt") == 0) {
+				return "text/plain";
+			}
+		}
+	}
+	return "text/brut";
+}
+
+static bool pathIsFile(std::string &path) {
+	const char *cpath = path.c_str();
+	if (cpath[path.length()] == '/')
+		return false;
+	return true;
+}
+
+static bool isPathOpenable(std::string &path) {
+	if (pathIsFile(path)) {
+		int fd = open(path.c_str(), O_RDONLY);
+		if (fd == -1)
+			return false;
+		return true;
+	} else {
+		DIR *pDir = opendir(path.c_str());
+		if (pDir == NULL)
+			return false;
+		return true;
+	}
+}
+
+static std::string intToStdString(int nb) {
+	std::ostringstream oss117;
+	oss117 << nb;
+	return oss117.str();
+}
+
+static int getFileOctetsSize(std::string &path) {
+	struct stat file_stat;
+
+	if (stat(path.c_str(), &file_stat) == 0)
+		return file_stat.st_size;
+	return 0;
+}
+
+static std::string pathfileToStringBackslashs(std::string &path) {
+	std::string result;
+	std::ifstream inputFile(path.c_str());
+
+	if (!inputFile.is_open())
+		return "";
+
+	std::string line;
+	while (std::getline(inputFile, line)) {
+		result.append(line + "\r\n");
+	}
+
+	inputFile.close();
+	return result;
+}
+
+static std::string getDate() {
+	std::time_t now = std::time(0);
+	struct tm *LT = std::localtime(&now);
+
+	std::string week_day;
+	const char* weekdays[] = {"Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"};
+	week_day = weekdays[LT->tm_wday % 7];
+
+	std::string month_day = intToStdString(LT->tm_mday);
+
+	std::string month;
+	const char* months[] = {"Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
+	month = months[LT->tm_mon];
+
+	std::string year = intToStdString(LT->tm_year + 1900);
+
+	std::string time = intToStdString(LT->tm_hour) + ":" + intToStdString(LT->tm_min) + ":" + intToStdString(LT->tm_sec);
+
+	return week_day + ", " + month_day + " " + month + " " + year + " " + time + " GMT";
+}
+
+Response::Response(Request *request, Server* server, int status) : _request(request), _server(server), _status(status) {
+	// default html error pages
+	std::string bad_request_path = "resources/bad_request.html";
+	std::string internal_server_error_path = "resources/internal_server_error.html";
+	std::string not_found_path = "resources/not_found.html";
+	std::string auto_index_path = "resources/auto_index.html";
+
+	// default params
+	_http_version = "HTTP/1.1";
+	_headers["Date"] = getDate();
+	_headers["Server"] = "Webserv/1.0 (42)";
+	_headers["Connection"] = "Closed";
+
+	// bad request + internal server error
+	if (_status == 400) {
+		_text_status = "Bad Request";
+		_headers["Content-Type"] = "text/html";
+		_headers["Content-Length"] = intToStdString(getFileOctetsSize(bad_request_path));
+		_body = pathfileToStringBackslashs(bad_request_path);
+		return;
+	} else if (_status != 200) {
+		_status = 500;
+		_text_status = "Internal Server Error";
+		_headers["Content-Type"] = "text/html";
+		_headers["Content-Length"] = intToStdString(getFileOctetsSize(internal_server_error_path));
+		_body = pathfileToStringBackslashs(internal_server_error_path);
+		return;
+	}
+
+	// GET POST DELETE
+	_text_status = "OK";
+	if (_request->getMethodType() == "GET") {
+		std::string path = _server->getRoot() + request->getPathToResource();
+		if (isPathOpenable(path) == false) {
+			_status = 404;
+			_text_status = "Not Found";
+			_headers["Content-Type"] = "text/html";
+			_headers["Content-Length"] = intToStdString(getFileOctetsSize(not_found_path));
+			_body = pathfileToStringBackslashs(not_found_path);
+			return;
+		} else if (pathIsFile(path)) {
+			_headers["Content-Type"] = getContentTypeFromPath(path);
+			_headers["Content-Length"] = intToStdString(getFileOctetsSize(path));
+			_body = pathfileToStringBackslashs(path);
+			return;
+		} else {
+			_headers["Content-Type"] = "text/html";
+			_headers["Content-Length"] = intToStdString(getFileOctetsSize(auto_index_path));
+			_body = pathfileToStringBackslashs(internal_server_error_path);
+			_body = pathfileToStringBackslashs(internal_server_error_path);
+			return;
+		}
+	}
+	else if (_request->getMethodType() == "POST") {
+		_headers["Content-Type"] = "text/brut";
+		_headers["Content-Length"] = 4;
+		_body = "OK\r\n";
+		return;
+	}
+	else if (_request->getMethodType() == "DELETE") {
+		_headers["Content-Type"] = "text/brut";
+		_headers["Content-Length"] = 4;
+		_body = "OK\r\n";
+		return;
+	}
+}
+
+std::string Response::getStringResponse() {
+	std::string result;
+
+	// 1st line
+	result.append(_http_version + " " + intToStdString(_status) + " " + _text_status + "\r\n");
+
+	// headers
+	for (std::map<std::string, std::string>::iterator it = _headers.begin(); it != _headers.end(); ++it) {
+		result.append(it->first + ": " + it->second +  "\r\n");
+	}
+
+	// body
+	result.append("\r\n");
+	result.append(_body);
+
+	return result;
+}
+
+Response::~Response() {}
