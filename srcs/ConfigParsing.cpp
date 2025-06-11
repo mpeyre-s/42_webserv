@@ -49,13 +49,18 @@ void ConfigParsing::parseServerBlock(const std::vector<std::string>& block, Serv
 			token.clear();
 		}
 	}
+	int i = 0;
 	for(std::vector<std::vector<std::string> >::const_iterator it1 = _tokenizedBlock.begin(); it1 != _tokenizedBlock.end(); it1++)
 	{
-		std::cout << "------Tokenisation------" << std::endl;
+		i++;
+		std::cout << "------Tokenisation ligne " << i << " ------" << std::endl;
 		for (std::vector<std::string>::const_iterator it2 = it1->begin(); it2 != it1->end(); it2++)
 			std::cout << "[" << *it2 << "]" << " ";
 		std::cout << std::endl; 
 	}
+	std::cout << std::endl; 
+	std::cout << std::endl; 
+	std::cout << std::endl; 
 	(void) server;
 	_tokenizedBlock.clear();
 }
@@ -76,7 +81,7 @@ std::vector<std::string> ConfigParsing::tokenizeLine(const std::string& line)
 				currentToken.clear();
 			}
 		}
-		else if (c == '{' || c == '}' || c == ';')
+		else if (c == '{' || c == '}' || c == ';' || c == ':')
 		{
 			if(!currentToken.empty())
 			{
