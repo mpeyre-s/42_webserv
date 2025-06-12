@@ -1,51 +1,50 @@
 #include "../includes/Server.hpp"
 
-Location::Location() : alias(false), client_body_buffer_size(0) {}
+Location::Location() {}
 
 Location::~Location() {}
 
 Server::Server() {
-	server_name = "webserv";
-	host = "127.0.0.1";
+	server_name = "localhost";
+	host = "0.0.0.0";
 	port = 8080;
 	root = "website/";
 	index = "index.html";
 	allowed_methods.push_back("GET");
-	allowed_methods.push_back("POST");
-	allowed_methods.push_back("DELETE");
+	client_max_body_size = 1048576;
 
-	Location root_location;
-	root_location.path = "/";
-	root_location.allowed_methods.push_back("GET");
-	root_location.allowed_methods.push_back("POST");
-	root_location.allowed_methods.push_back("DELETE");
-	root_location.root = "website/";
-	root_location.index = "website/index.html";
-	root_location.alias = false;
-	root_location.client_body_buffer_size = 1 * 1024 * 1024; // 1MB
-	locations["/"] = root_location;
+	error_pages[404] = "resources/not_found.html";
+	error_pages[500] = "resources/internal_server_error.html";
 
-	// Server images
-	Location images_location;
-	images_location.path = "/images";
-	images_location.allowed_methods.push_back("GET");
-	images_location.root = "website/images";
-	images_location.index = "index.html";
-	images_location.alias = true;
-	images_location.client_body_buffer_size = 5 * 1024 * 1024; // 5MB
-	locations["/images"] = images_location;
+	// Location /upload
+	Location upload_loc;
+	upload_loc.allowed_methods.push_back("POST");
+	upload_loc.upload_dir = "website/media";
+	upload_loc.client_max_body_size = 5242880;
+	locations["/upload"] = upload_loc;
 
-	// CGI
-	Location api_location;
-	api_location.path = "/api";
-	api_location.allowed_methods.push_back("GET");
-	api_location.allowed_methods.push_back("POST");
-	api_location.root = "website/api";
-	api_location.index = "api.php";
-	api_location.alias = true;
-	api_location.client_body_buffer_size = 2 * 1024 * 1024; // 2MB
-	api_location.cgi_pass = "/usr/bin/php-cgi";
-	locations["/api"] = api_location;
+	// Location /files
+	Location files_loc;
+	files_loc.allowed_methods.push_back("GET");
+	files_loc.allowed_methods.push_back("DELETE");
+	files_loc.root = "website/media";
+	files_loc.auto_index = true;
+	locations["/files"] = files_loc;
+
+	// Location /private
+	Location private_loc;
+	private_loc.redirect_code = 301;
+	private_loc.redirect_url = "/";
+	locations["/private"] = private_loc;
+
+	// Location /cgi
+	Location cgi_loc;
+	cgi_loc.allowed_methods.push_back("GET");
+	cgi_loc.allowed_methods.push_back("POST");
+	cgi_loc.cgi_extensions.push_back(".php");
+	cgi_loc.cgi_path = "website/api";
+	cgi_loc.auto_index = false;
+	locations["/cgi"] = cgi_loc;
 }
 
 Server::~Server() {}
