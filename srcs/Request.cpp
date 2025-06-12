@@ -17,27 +17,27 @@ std::vector<std::string> split(const std::string &str, std::string delimiter) {
 }
 
 Request::Request(std::string &raw) {
-	_parsing_error = false;
+	_parsing_error = 200;
 	std::vector<std::string> lines = split(raw, "\r\n");
 
 	// parsing request line (1st line)
 	std::vector<std::string> request_line_splited = split(lines[0], " ");
 	if (request_line_splited.size() != 3) {
-		_parsing_error = true;
+		_parsing_error = 400;
 		return;
 	}
 	if (request_line_splited[0] != "GET" && request_line_splited[0] != "POST" && request_line_splited[0] != "DELETE") {
-		_parsing_error = true;
+		_parsing_error = 400;
 		return;
 	}
 	_method_type = request_line_splited[0];
 	if (request_line_splited[1].empty() || request_line_splited[1][0] != '/') {
-		_parsing_error = true;
+		_parsing_error = 400;
 		return;
 	}
 	_path_to_resource = request_line_splited[1];
 	if (request_line_splited[2] != "HTTP/1.1") {
-		_parsing_error = true;
+		_parsing_error = 400;
 		return;
 	}
 	_http_version = request_line_splited[2];
@@ -67,13 +67,10 @@ Request::Request(std::string &raw) {
 }
 
 Response* Request::process(Server* server) {
-
+	std::string log = _method_type + " " + _path_to_resource + " " + _http_version;
+	std::cout << "\033[35m[TRACE] " << log << "\033[0m" << std::endl;
 	Request *request_copy = new Request(*this);
-
-	if (_parsing_error)
-		return new Response(request_copy, server, 400);
-	else
-		return new Response(request_copy, server, 200);
+	return new Response(request_copy, server, _parsing_error);
 }
 
 Request &Request::operator=(const Request &other) {

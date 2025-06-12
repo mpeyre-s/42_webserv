@@ -265,7 +265,7 @@ void Webserv::run()
 
 	while (1)
 	{
-		printClientsMap();
+		// printClientsMap();
 		int res = poll(_fds.data(), _fds.size(), TIMEOUT);
 		if (res < 0)
 			negativPoll();

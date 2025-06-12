@@ -11,7 +11,7 @@ class Response;
 
 class Request {
 private:
-	bool _parsing_error;
+	int _parsing_error;
 
 	// REQUEST
 	std::string _method_type;

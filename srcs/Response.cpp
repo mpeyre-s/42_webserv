@@ -41,8 +41,7 @@ static std::string getContentTypeFromPath(std::string &path) {
 }
 
 static bool pathIsFile(std::string &path) {
-	const char *cpath = path.c_str();
-	if (cpath[path.length()] == '/')
+	if (path[path.length() - 1] == '/')
 		return false;
 	return true;
 }
@@ -118,6 +117,7 @@ Response::Response(Request *request, Server* server, int status) : _request(requ
 	std::string internal_server_error_path = "resources/internal_server_error.html";
 	std::string not_found_path = "resources/not_found.html";
 	std::string auto_index_path = "resources/auto_index.html";
+	std::string request_entity_too_large_path = "resources/request_entity_too_large.html";
 
 	// default params
 	_http_version = "HTTP/1.1";
@@ -125,14 +125,65 @@ Response::Response(Request *request, Server* server, int status) : _request(requ
 	_headers["Server"] = "Webserv/1.0 (42)";
 	_headers["Connection"] = "Closed";
 
-	// bad request + internal server error
+	// get server params based on path to ressource request
+	std::string potential_server = "/";
+	std::map<std::string, Location> locations_nested = _server->getLocations();
+	size_t max_match_length = 0;
+	for (std::map<std::string, Location>::iterator it = locations_nested.begin(); it != locations_nested.end(); ++it) {
+		std::string key = it->first;
+		if (strncmp(key.c_str(), _request->getPathToResource().c_str(), key.length()) == 0) {
+			if (key.length() > max_match_length) {
+				potential_server = key;
+				max_match_length = key.length();
+			}
+		}
+	}
+	std::cout << "Potential Server: " << potential_server << std::endl;
+
+	// class instant with all config params for the current endpoint asked
+	Location cur_location = locations_nested[potential_server];
+	if (potential_server == "/" || potential_server.empty())
+		cur_location.path = "/";
+	if (cur_location.path.empty())
+		cur_location.path = potential_server;
+	if (cur_location.allowed_methods.empty())
+		cur_location.allowed_methods = server->getAllowedMethods();
+	if (cur_location.root.empty())
+		cur_location.root = server->getRoot();
+	if (cur_location.index.empty())
+		cur_location.index = server->getIndex();
+	if (!cur_location.client_max_body_size)
+		cur_location.client_max_body_size = server->getClientMaxBodySize();
+	if (cur_location.error_pages.size() == 0)
+		cur_location.error_pages = server->getErrorPages();
+
+	// replace error pages if needed
+	if (cur_location.error_pages.find(400) != cur_location.error_pages.end())
+		bad_request_path = cur_location.error_pages[400];
+	if (cur_location.error_pages.find(413) != cur_location.error_pages.end())
+		request_entity_too_large_path = cur_location.error_pages[413];
+	if (cur_location.error_pages.find(500) != cur_location.error_pages.end())
+		internal_server_error_path = cur_location.error_pages[500];
+	if (cur_location.error_pages.find(404) != cur_location.error_pages.end())
+		not_found_path = cur_location.error_pages[404];
+
+	// bad request + internal server error + Request Entity Too Large
 	if (_status == 400) {
 		_text_status = "Bad Request";
 		_headers["Content-Type"] = "text/html";
 		_headers["Content-Length"] = intToStdString(getFileOctetsSize(bad_request_path));
 		_body = pathfileToStringBackslashs(bad_request_path);
 		return;
-	} else if (_status != 200) {
+	}
+	else if ((int)request->getBody().size() > cur_location.client_max_body_size) {
+		_status = 413;
+		_text_status = "Request Entity Too Large";
+		_headers["Content-Type"] = "text/html";
+		_headers["Content-Length"] = intToStdString(getFileOctetsSize(request_entity_too_large_path));
+		_body = pathfileToStringBackslashs(request_entity_too_large_path);
+		return;
+	}
+	else if (_status != 200) {
 		_status = 500;
 		_text_status = "Internal Server Error";
 		_headers["Content-Type"] = "text/html";
@@ -143,8 +194,14 @@ Response::Response(Request *request, Server* server, int status) : _request(requ
 
 	// GET POST DELETE
 	_text_status = "OK";
+
 	if (_request->getMethodType() == "GET") {
-		std::string path = _server->getRoot() + request->getPathToResource();
+		std::string path = cur_location.root + request->getPathToResource().substr(cur_location.path.length());
+		if (path[path.length() - 1] == '/' && cur_location.auto_index == false)
+			path.append(cur_location.index);
+		else if (request->getPathToResource() == potential_server)
+			path.append("/");
+		std::cout << "PATH: " << path << std::endl;
 		if (isPathOpenable(path) == false) {
 			_status = 404;
 			_text_status = "Not Found";
@@ -158,42 +215,35 @@ Response::Response(Request *request, Server* server, int status) : _request(requ
 			_body = pathfileToStringBackslashs(path);
 			return;
 		} else {
-			_headers["Content-Type"] = "text/html";
+			_headers["Content-Type"] = getContentTypeFromPath(auto_index_path);
 			_headers["Content-Length"] = intToStdString(getFileOctetsSize(auto_index_path));
-			_body = pathfileToStringBackslashs(internal_server_error_path);
-			_body = pathfileToStringBackslashs(internal_server_error_path);
+			_body = pathfileToStringBackslashs(auto_index_path);
 			return;
 		}
 	}
 	else if (_request->getMethodType() == "POST") {
 		_headers["Content-Type"] = "text/brut";
-		_headers["Content-Length"] = 4;
+		_headers["Content-Length"] = "4";
 		_body = "OK\r\n";
 		return;
 	}
 	else if (_request->getMethodType() == "DELETE") {
 		_headers["Content-Type"] = "text/brut";
-		_headers["Content-Length"] = 4;
+		_headers["Content-Length"] = "4";
 		_body = "OK\r\n";
 		return;
 	}
 }
 
 std::string Response::getStringResponse() {
+	// build string -> buffer_out
 	std::string result;
-
-	// 1st line
 	result.append(_http_version + " " + intToStdString(_status) + " " + _text_status + "\r\n");
-
-	// headers
 	for (std::map<std::string, std::string>::iterator it = _headers.begin(); it != _headers.end(); ++it) {
 		result.append(it->first + ": " + it->second +  "\r\n");
 	}
-
-	// body
 	result.append("\r\n");
 	result.append(_body);
-
 	return result;
 }
 
