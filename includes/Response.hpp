@@ -10,6 +10,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <dirent.h>
+#include <cstring>
 
 #include "../includes/Server.hpp"
 
@@ -28,7 +29,7 @@ private:
 	std::string _body;
 
 public:
-	Response(Request *request,Server* server, int status);
+	Response(Request *request ,Server* server, int status);
 	~Response();
 
 	std::string getStringResponse();

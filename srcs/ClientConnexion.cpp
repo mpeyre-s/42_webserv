@@ -1,7 +1,6 @@
 #include "../includes/ClientConnexion.hpp"
 
 ClientConnexion::ClientConnexion(int fd, Server *server, State state) : _fd(fd), _server(server), _state(state), _bodySize(0) {
-	std::cout << "New Client fd = '"<< _fd << "' has been created" << std::endl;
 	_request = NULL;
 
 }

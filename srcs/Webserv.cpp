@@ -117,7 +117,6 @@ void	Webserv::handleClientReading(int fd)
 			return ;
 		else
 		{
-			std::cerr << "Erreur read pour client au fd : " << fd << std::endl;
 			removeClientIfPossible(fd);
 		}
 	}

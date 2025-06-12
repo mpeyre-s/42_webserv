@@ -19,7 +19,6 @@ public:
 	int redirect_code;
 	std::string redirect_url;
 	std::map<int, std::string> error_pages;
-	std::map<std::string, Location> nested_locations;
 
 	Location();
 	~Location();
@@ -46,6 +45,8 @@ public:
 	int getPort() const;
 	std::string getRoot() const;
 	std::string getIndex() const;
+	int getClientMaxBodySize() const;
+	const std::map<int, std::string> getErrorPages() const;
 	const std::vector<std::string>& getAllowedMethods() const;
 	const std::map<std::string, Location>& getLocations() const;
 };

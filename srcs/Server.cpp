@@ -1,6 +1,6 @@
 #include "../includes/Server.hpp"
 
-Location::Location() {}
+Location::Location() : client_max_body_size(0), redirect_code(0) {}
 
 Location::~Location() {}
 
@@ -20,7 +20,7 @@ Server::Server() {
 	Location upload_loc;
 	upload_loc.allowed_methods.push_back("POST");
 	upload_loc.upload_dir = "website/media";
-	upload_loc.client_max_body_size = 5242880;
+	upload_loc.client_max_body_size = 10;
 	locations["/upload"] = upload_loc;
 
 	// Location /files
@@ -75,4 +75,12 @@ const std::vector<std::string>& Server::getAllowedMethods() const {
 
 const std::map<std::string, Location>& Server::getLocations() const {
 	return locations;
+}
+
+int Server::getClientMaxBodySize() const {
+	return client_max_body_size;
+}
+
+const std::map<int, std::string> Server::getErrorPages() const {
+	return error_pages;
 }
