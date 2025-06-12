@@ -151,9 +151,7 @@ Location setLocation(std::vector<std::vector<std::string> > LocationTMP, std::st
 
 void ConfigParsing::parseServerBlock(std::vector<std::vector<std::string> >	tokenizedBlock, Server* server)
 {
-	for(std::vector<std::vector<std::string> >::const_iterator it = tokenizedBlock.begin(); it != tokenizedBlock.end(); it++)
-		if ((*it)[0] == "server_name")
-			server->setServerName((*it)[1]);
+	server->setClientMaxBody(0);
 	std::vector<std::vector<std::string> > LocationTMP;
 	for (size_t i = 0; i < tokenizedBlock.size(); i++)
 	{
@@ -194,6 +192,55 @@ void ConfigParsing::parseServerBlock(std::vector<std::vector<std::string> >	toke
 			loc = setLocation(LocationTMP, path);
 			LocationTMP.clear();
 			server->setLocation(path, loc);
+		}
+		if (line[0] == "server_name")
+			if (line.size() > 1 && !line[1].empty()) 
+				server->setServerName(line[1]);
+		if (line[0] == "listen")
+		{
+			if (line.size() > 1 && !line[1].empty()) 
+				server->setHost(line[1]);
+			if (line.size() > 2 && !line[2].empty())
+			{
+				int port;
+				std::stringstream ss(line[2]);
+				ss >> port;
+				server->setPort(port);
+			}
+		}
+		if (line[0] == "root")
+			if (line.size() > 1 && !line[1].empty()) 
+				server->setRoot(line[1]);
+		if (line[0] == "index")
+			if (line.size() > 1 && !line[1].empty()) 
+				server->setIndex(line[1]);
+		if (line[0] == "error_page")
+		{
+			if (line.size() > 2 && !line[1].empty() && !line[2].empty())
+			{
+				int error;
+				std::stringstream ss(line[1]);
+				ss >> error;
+				std::string err_path = line[2];
+				server->addErrorPage(error, err_path);
+			}
+		}
+		if (line[0] == "client_max_body_size")
+		{
+			if (line.size() > 1 && !line[1].empty())
+			{
+				int clienttmp;
+				std::stringstream ss(line[1]);
+				ss >> clienttmp;
+				server->setClientMaxBody(clienttmp);
+			}
+		}
+		if (line[0] == "allow_methods")
+		{
+			for (size_t j = 0; j < line.size(); j++)
+				if ((line[j] == "GET" || line[j] == "POST" || line[j] == "DELETE"))
+					server->addAllowedMethod(line[j]);
+					
 		}
 	}
 }
@@ -296,7 +343,7 @@ std::vector<Server*> ConfigParsing::createServerList() {
 	{
 		Server* server = new Server;
 		tokenizeServerBlock(_serverBlocks[i], server);
-		printServerTest(server);
+		//printServerTest(server);
 		_list_servers.push_back(server);
 	}
 	return _list_servers;

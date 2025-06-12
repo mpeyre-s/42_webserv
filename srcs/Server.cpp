@@ -101,3 +101,15 @@ void Server::setLocation(const std::string path, Location& newLocation){
 	locations[path] = newLocation;
 }
 
+void Server::addErrorPage(int err, std::string mess)
+{
+	error_pages[err] = mess;
+}
+void Server::addAllowedMethod(std::string method){
+	allowed_methods.push_back(method);
+}
+
+void Server::setClientMaxBody(int clientMaxBody){
+	client_max_body_size =  clientMaxBody;
+}
+
