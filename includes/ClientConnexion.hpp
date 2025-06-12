@@ -29,11 +29,10 @@ class ClientConnexion
 		std::string	bufferOut;
 		int			_bodySize;
 
-		time_t		_start; // TODO
+		time_t		_start;
 		bool		_timedOut;
 		bool		keep_alive;
 
-		//Response	*_response;
 		Request		*_request;
 
 		bool	isDoneReading();
