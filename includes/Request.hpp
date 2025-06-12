@@ -31,5 +31,6 @@ public:
 	std::string getMethodType() const;
 	std::string getPathToResource() const;
 	std::map<std::string, std::string> getHeaders() const;
+	bool	isKeepAlive();
 	std::string getBody() const;
 };

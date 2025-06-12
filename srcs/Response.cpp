@@ -113,20 +113,23 @@ static std::string getDate() {
 
 Response::Response(Request *request, Server* server, int status) : _request(request), _server(server), _status(status) {
 	// default html error pages
-	std::string bad_request_path = "resources/bad_request.html";
-	std::string internal_server_error_path = "resources/internal_server_error.html";
-	std::string not_found_path = "resources/not_found.html";
-	std::string auto_index_path = "resources/auto_index.html";
-	std::string request_entity_too_large_path = "resources/request_entity_too_large.html";
+	bad_request_path = "resources/bad_request.html";
+	internal_server_error_path = "resources/internal_server_error.html";
+	not_found_path = "resources/not_found.html";
+	auto_index_path = "resources/auto_index.html";
+	request_entity_too_large_path = "resources/request_entity_too_large.html";
 
 	// default params
 	_http_version = "HTTP/1.1";
 	_headers["Date"] = getDate();
 	_headers["Server"] = "Webserv/1.0 (42)";
-	_headers["Connection"] = "Closed";
+	if (_request->isKeepAlive() == false)
+		_headers["Connection"] = "Closed";
+	else
+		_headers["Connection"] = "keep-alive";
 
 	// get server params based on path to ressource request
-	std::string potential_server = "/";
+	potential_server = "/";
 	std::map<std::string, Location> locations_nested = _server->getLocations();
 	size_t max_match_length = 0;
 	for (std::map<std::string, Location>::iterator it = locations_nested.begin(); it != locations_nested.end(); ++it) {
@@ -141,7 +144,7 @@ Response::Response(Request *request, Server* server, int status) : _request(requ
 	std::cout << "Potential Server: " << potential_server << std::endl;
 
 	// class instant with all config params for the current endpoint asked
-	Location cur_location = locations_nested[potential_server];
+	cur_location = locations_nested[potential_server];
 	if (potential_server == "/" || potential_server.empty())
 		cur_location.path = "/";
 	if (cur_location.path.empty())
@@ -167,7 +170,17 @@ Response::Response(Request *request, Server* server, int status) : _request(requ
 	if (cur_location.error_pages.find(404) != cur_location.error_pages.end())
 		not_found_path = cur_location.error_pages[404];
 
-	// bad request + internal server error + Request Entity Too Large
+	//check if status is bad request
+	if (_status != 200)
+		_badRequest = true;
+	else
+		_badRequest = false;
+
+}
+
+// bad request + internal server error + Request Entity Too Large
+void	Response::badRequest()
+{
 	if (_status == 400) {
 		_text_status = "Bad Request";
 		_headers["Content-Type"] = "text/html";
@@ -175,7 +188,7 @@ Response::Response(Request *request, Server* server, int status) : _request(requ
 		_body = pathfileToStringBackslashs(bad_request_path);
 		return;
 	}
-	else if ((int)request->getBody().size() > cur_location.client_max_body_size) {
+	else if ((int)_request->getBody().size() > cur_location.client_max_body_size) {
 		_status = 413;
 		_text_status = "Request Entity Too Large";
 		_headers["Content-Type"] = "text/html";
@@ -191,52 +204,67 @@ Response::Response(Request *request, Server* server, int status) : _request(requ
 		_body = pathfileToStringBackslashs(internal_server_error_path);
 		return;
 	}
+}
 
-	// GET POST DELETE
+void	Response::get()
+{
 	_text_status = "OK";
 
-	if (_request->getMethodType() == "GET") {
-		std::string path = cur_location.root + request->getPathToResource().substr(cur_location.path.length());
-		if (path[path.length() - 1] == '/' && cur_location.auto_index == false)
-			path.append(cur_location.index);
-		else if (request->getPathToResource() == potential_server)
-			path.append("/");
-		std::cout << "PATH: " << path << std::endl;
-		if (isPathOpenable(path) == false) {
-			_status = 404;
-			_text_status = "Not Found";
-			_headers["Content-Type"] = "text/html";
-			_headers["Content-Length"] = intToStdString(getFileOctetsSize(not_found_path));
-			_body = pathfileToStringBackslashs(not_found_path);
-			return;
-		} else if (pathIsFile(path)) {
-			_headers["Content-Type"] = getContentTypeFromPath(path);
-			_headers["Content-Length"] = intToStdString(getFileOctetsSize(path));
-			_body = pathfileToStringBackslashs(path);
-			return;
-		} else {
-			_headers["Content-Type"] = getContentTypeFromPath(auto_index_path);
-			_headers["Content-Length"] = intToStdString(getFileOctetsSize(auto_index_path));
-			_body = pathfileToStringBackslashs(auto_index_path);
-			return;
-		}
-	}
-	else if (_request->getMethodType() == "POST") {
-		_headers["Content-Type"] = "text/brut";
-		_headers["Content-Length"] = "4";
-		_body = "OK\r\n";
+	std::string path = cur_location.root + _request->getPathToResource().substr(cur_location.path.length());
+	if (path[path.length() - 1] == '/' && cur_location.auto_index == false)
+		path.append(cur_location.index);
+	else if (_request->getPathToResource() == potential_server)
+		path.append("/");
+	std::cout << "PATH: " << path << std::endl;
+	if (isPathOpenable(path) == false) {
+		_status = 404;
+		_text_status = "Not Found";
+		_headers["Content-Type"] = "text/html";
+		_headers["Content-Length"] = intToStdString(getFileOctetsSize(not_found_path));
+		_body = pathfileToStringBackslashs(not_found_path);
 		return;
-	}
-	else if (_request->getMethodType() == "DELETE") {
-		_headers["Content-Type"] = "text/brut";
-		_headers["Content-Length"] = "4";
-		_body = "OK\r\n";
+	} else if (pathIsFile(path)) {
+		_headers["Content-Type"] = getContentTypeFromPath(path);
+		_headers["Content-Length"] = intToStdString(getFileOctetsSize(path));
+		_body = pathfileToStringBackslashs(path);
+		return;
+	} else {
+		_headers["Content-Type"] = getContentTypeFromPath(auto_index_path);
+		_headers["Content-Length"] = intToStdString(getFileOctetsSize(auto_index_path));
+		_body = pathfileToStringBackslashs(auto_index_path);
 		return;
 	}
 }
 
+void	Response::post() {
+	_headers["Content-Type"] = "text/brut";
+	_headers["Content-Length"] = "4";
+	_body = "OK\r\n";
+	return;
+}
+
+void	Response::Delete() {
+	_headers["Content-Type"] = "text/brut";
+	_headers["Content-Length"] = "4";
+	_body = "OK\r\n";
+	return;
+}
+
+void	Response::process() {
+	if (_badRequest)
+		badRequest();
+	else if (_request->getMethodType() == "GET")
+		get();
+	else if (_request->getMethodType() == "POST")
+		post();
+	else if (_request->getMethodType() == "DELETE")
+		Delete();
+}
+
 std::string Response::getStringResponse() {
 	// build string -> buffer_out
+	process();
+	std::cout << "TeST" << std::endl;
 	std::string result;
 	result.append(_http_version + " " + intToStdString(_status) + " " + _text_status + "\r\n");
 	for (std::map<std::string, std::string>::iterator it = _headers.begin(); it != _headers.end(); ++it) {

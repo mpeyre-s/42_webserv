@@ -58,6 +58,7 @@ class ClientConnexion
 		void	setBufferOut(std::string buff);
 		void	setState(State);
 		void	setRequest(Request *);
+		void	setKeepAlive(bool);
 		void	UpdateActivity();
 
 		void	clearBuffer();

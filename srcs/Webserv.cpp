@@ -123,6 +123,7 @@ void	Webserv::handleClientReading(int fd)
 			Request *request = new Request(client->getBufferIn());
 			Response* response = request->process(client->getServer());
 			client->setBufferOut(response->getStringResponse());
+			//client->setKeepAlive(request->isKeepAlive());
 
 			delete request;
 			delete response;
@@ -265,7 +266,6 @@ void Webserv::run()
 
 	while (1)
 	{
-		// printClientsMap();
 		int res = poll(_fds.data(), _fds.size(), TIMEOUT);
 		if (res < 0)
 			negativPoll();
@@ -276,22 +276,7 @@ void Webserv::run()
 	}
 }
 
-
 void Webserv::negativPoll() {
 	return ;
 }
 
-
-
-void Webserv::printClientsMap() const {
-	std::cout << "--- Contenu de _clients ---" << std::endl;
-	for (std::map<int, ClientConnexion*>::const_iterator it = _clients.begin(); it != _clients.end(); ++it) {
-		std::cout << "FD: " << it->first;
-		if (it->second)
-			std::cout << " | Client @ " << it->second;
-		else
-			std::cout << " | Client pointeur nul";
-		std::cout << std::endl;
-	}
-	std::cout << "---------------------------\n" << std::endl;
-}

@@ -12,7 +12,7 @@ int main(int ac, char **av) {
 			webserv.run();
 		}
 		catch(const std::exception& e) {
-			std::cerr << e.what() << '\n';
+			std::cerr << e.what() << std::endl;
 		}
 	} else {
 		std::cout << "\033[1;34mUsage: \033[0m" << av[0] << " \033[1;32m<configuration_file>\033[0m" << std::endl;

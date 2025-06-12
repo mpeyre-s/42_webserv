@@ -57,7 +57,7 @@ class Webserv {
 		// poll
 		void	positivPoll();
 		void	negativPoll(); // TODO
-		void	timeoutPoll(); // TODO
+		void	timeoutPoll();
 
 
 
@@ -66,5 +66,4 @@ class Webserv {
 		~Webserv(); // TODO
 
 		void run();
-		void printClientsMap() const; // A delete
 };

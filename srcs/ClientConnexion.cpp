@@ -31,6 +31,10 @@ bool	ClientConnexion::getKeep_alive() {
 	return keep_alive;
 }
 
+void	ClientConnexion::setKeepAlive(bool kp) {
+	keep_alive = kp;
+}
+
 
 std::string	&ClientConnexion::getBufferIn() {
 	return bufferIn;
