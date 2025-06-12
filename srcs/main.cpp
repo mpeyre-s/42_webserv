@@ -36,9 +36,9 @@ void printServerVector(std::vector<Server*> servers) {
 				std::cout << "  Location Path: " << it->first << std::endl;
 				std::cout << "    Root: " << it->second.root << std::endl;
 				std::cout << "    Index: " << it->second.index << std::endl;
-				std::cout << "    Alias: " << (it->second.alias ? "Yes" : "No") << std::endl;
-				std::cout << "    Client Body Buffer Size: " << it->second.client_body_buffer_size << std::endl;
-				std::cout << "    CGI Pass: " << it->second.cgi_pass << std::endl;
+				//std::cout << "    Alias: " << (it->second.alias ? "Yes" : "No") << std::endl;
+				//std::cout << "    Client Body Buffer Size: " << it->second.client_body_buffer_size << std::endl;
+				//std::cout << "    CGI Pass: " << it->second.cgi_pass << std::endl;
 
 				std::cout << "    Allowed Methods: ";
 				if (it->second.allowed_methods.empty()) {

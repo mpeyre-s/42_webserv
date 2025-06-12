@@ -11,9 +11,14 @@ public:
 	std::vector<std::string> allowed_methods;
 	std::string root;
 	std::string index;
-	bool alias;
-	int client_body_buffer_size;
-	std::string cgi_pass;
+	std::string upload_dir;
+	bool auto_index;
+	int client_max_body_size;
+	std::vector<std::string> cgi_extensions;
+	std::string cgi_path;
+	int redirect_code;
+	std::string redirect_url;
+	std::map<int, std::string> error_pages;
 	std::map<std::string, Location> nested_locations;
 
 	Location();
@@ -28,6 +33,8 @@ private:
 	std::string root;
 	std::string index;
 	std::vector<std::string> allowed_methods;
+	int client_max_body_size;
+	std::map<int, std::string> error_pages;
 	std::map<std::string, Location> locations;
 
 public:
@@ -41,4 +48,12 @@ public:
 	std::string getIndex() const;
 	const std::vector<std::string>& getAllowedMethods() const;
 	const std::map<std::string, Location>& getLocations() const;
+
+	void setServerName(const std::string& server);
+	void setHost(std::string& hostname);
+	void setPort(int& porttmp);
+	void setRoot(std::string& rootname);
+	void setIndex(std::string& indexname);
+	//void set allowed method
+	void setLocation(const std::string, Location& location);
 };
