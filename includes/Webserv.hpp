@@ -13,7 +13,7 @@
 #include "Request.hpp"
 #include "Response.hpp"
 
-#define TIMEOUT 1000 // le delai pour envoyer une requete
+#define TIMEOUT -1 // le delai pour envoyer une requete
 static const size_t BUFFER_SIZE = 2048;
 
 /*
@@ -50,9 +50,9 @@ class Webserv {
 		void	handleNewConnexion(int);
 
 		//Client
-		void	handleClientReading(int i); // TODO mais need Mathis
-		void	handleClientWriting(int i); // TODO
-		void	removeClientIfPossible(int i); // TODO
+		void	handleClientReading(int i);
+		void	handleClientWriting(int i);
+		void	removeClient(int i);
 
 		// poll
 		void	positivPoll();
@@ -66,4 +66,5 @@ class Webserv {
 		~Webserv(); // TODO
 
 		void run();
+		void printClientsMap() const; // A delete
 };

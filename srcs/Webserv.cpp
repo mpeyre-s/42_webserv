@@ -96,7 +96,6 @@ void Webserv::handleNewConnexion(int server_fd)
 	client_poll.revents = 0;
 	_fds.push_back(client_poll);
 
-
 	// Création de l'instance de la class ClientConnexion pour gérer ce nouveau client
 	ClientConnexion *client = new ClientConnexion(client_fd, _correspondingServ[server_fd], TO_READ);
 	_clients[client_fd] = client;
@@ -107,40 +106,33 @@ void	Webserv::handleClientReading(int fd)
 	ClientConnexion *client = _clients[fd];
 	char			buf[BUFFER_SIZE];
 
+	if (client->hasTimedOut() == true)
+	{
+		removeClient(fd);
+		return ;
+	}
+
 	int bytes = read(fd, buf, BUFFER_SIZE);
 	if (bytes > 0)
 	{
+		client->UpdateActivity();
 		client->appendToBuffer(buf, bytes);
 		if (client->getState() == DONE_READING)
 		{
-			//TEST
-			std::cout << "=== REQUÊTE REÇUE ===" << std::endl;
-        	std::cout << client->getBufferIn() << std::endl;
-        	std::cout << "===================" << std::endl;
-
-
+			// Il faut me donner keep alive ici
 			Request *request = new Request(client->getBufferIn());
 			Response* response = request->process(client->getServer());
-
-			//TEST
-			std::cout << "=== RÉPONSE GÉNÉRÉE ===" << std::endl;
-        	std::cout << response->getStringResponse() << std::endl;
-        	std::cout << "=====================" << std::endl;
-
-
 			client->setBufferOut(response->getStringResponse());
 
 			delete request;
 			delete response;
+
 			client->setState(TO_WRITE);
-
 			changeEvents(fd, POLLOUT);
-
-			//estd::cout << "======== buffer out ========" << std::endl << client->getBufferOut() << std::endl;
 		}
 	}
 	else if (bytes == 0)
-		removeClientIfPossible(fd);
+		removeClient(fd);
 	else
 	{
 		// Rien à lire pour l’instant : on attendra un autre POLLIN (ne devrait jamais arriver)
@@ -149,7 +141,7 @@ void	Webserv::handleClientReading(int fd)
 		else
 		{
 			std::cerr << "Erreur read pour client dont le fd est : " << fd << std::endl;
-			removeClientIfPossible(fd);
+			removeClient(fd);
 		}
 	}
 }
@@ -158,19 +150,30 @@ void	Webserv::handleClientWriting(int fd)
 {
 	ClientConnexion *client = _clients[fd];
 	std::string &buffer = client->getBufferOut();
+
+	if (client->hasTimedOut() == true)
+	{
+		removeClient(fd);
+		return ;
+	}
+
 	int bytesSent = send(fd, buffer.c_str(), buffer.size(), 0);
 	if (bytesSent > 0)
 	{
+		client->UpdateActivity();
 		client->removeFromBuffer(bytesSent);
 		if (client->getState() == DONE_WRITING)
 		{
-			// il faut gerer plein de choses genre keep alive etc etc etc que je verrai plus tard
+			// faut il gerer autre chose ?
 			client->clearBuffer();
-			changeEvents(fd, POLLIN);
+			if (client->getKeep_alive() == false)
+				removeClient(fd);
+			else
+				changeEvents(fd, POLLIN);
 		}
 	}
 	else if (bytesSent == 0)
-		removeClientIfPossible(fd);
+		removeClient(fd);
 	else
 	{
 		// Rien à écrire pour l’instant : on attendra un autre POLLIN (ne devrait jamais arriver)
@@ -179,14 +182,41 @@ void	Webserv::handleClientWriting(int fd)
 		else
 		{
 			std::cerr << "Erreur write pour client dont le fd est : " << fd << std::endl;
-			removeClientIfPossible(fd);
+			removeClient(fd);
 		}
 	}
 }
 
-void Webserv::positivPoll() // Je vais avoir un probleme ici. je parcours une boucle mais si je supprime un fd je vais avoir des acces hors limite
+void Webserv::removeClient(int fd)
 {
-	for (size_t i = 0; i < _fds.size(); ++i)
+	std::cout << "Removing client with fd: " << fd << std::endl;
+
+	// Supprimer du vecteur _fds
+	for (std::vector<pollfd>::iterator it = _fds.begin(); it != _fds.end(); ++it)
+	{
+		if (it->fd == fd)
+		{
+			_fds.erase(it);
+			break;
+		}
+	}
+
+	// Supprimer et libérer le client
+	std::map<int, ClientConnexion*>::iterator client_it = _clients.find(fd);
+	if (client_it != _clients.end())
+	{
+		delete client_it->second;
+		_clients.erase(client_it);
+	}
+
+	// Fermer le fd en dernier
+	close(fd);
+}
+
+
+void Webserv::positivPoll()
+{
+	for (int i = _fds.size() - 1; i >= 0; --i)
 	{
 		if (_fds[i].revents != 0)
 		{
@@ -202,9 +232,27 @@ void Webserv::positivPoll() // Je vais avoir un probleme ici. je parcours une bo
 				else if (_fds[i].revents & POLLOUT)
 					handleClientWriting(_fds[i].fd);
 				else if (_fds[i].revents & (POLLERR | POLLHUP | POLLNVAL))
-					removeClientIfPossible(_fds[i].fd);
+					removeClient(_fds[i].fd);
 			}
 		}
+	}
+}
+
+void Webserv::timeoutPoll()
+{
+	std::map<int, ClientConnexion *>::iterator it;
+	it = _clients.begin();
+	while (it != _clients.end())
+	{
+		int fd = it->first;
+		ClientConnexion *client = _clients[fd];
+		if (client->hasTimedOut())
+		{
+			removeClient(fd);
+			it = _clients.upper_bound(fd);
+		}
+		else
+			++it;
 	}
 }
 
@@ -217,6 +265,7 @@ void Webserv::run()
 
 	while (1)
 	{
+		printClientsMap();
 		int res = poll(_fds.data(), _fds.size(), TIMEOUT);
 		if (res < 0)
 			negativPoll();
@@ -232,11 +281,17 @@ void Webserv::negativPoll() {
 	return ;
 }
 
-void Webserv::timeoutPoll() {
-	return ;
+
+
+void Webserv::printClientsMap() const {
+	std::cout << "--- Contenu de _clients ---" << std::endl;
+	for (std::map<int, ClientConnexion*>::const_iterator it = _clients.begin(); it != _clients.end(); ++it) {
+		std::cout << "FD: " << it->first;
+		if (it->second)
+			std::cout << " | Client @ " << it->second;
+		else
+			std::cout << " | Client pointeur nul";
+		std::cout << std::endl;
+	}
+	std::cout << "---------------------------\n" << std::endl;
 }
-
-
-void	Webserv::removeClientIfPossible(int i){ (void)i; return ;}
-
-

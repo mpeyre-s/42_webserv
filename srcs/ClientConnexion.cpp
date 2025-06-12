@@ -3,21 +3,35 @@
 ClientConnexion::ClientConnexion(int fd, Server *server, State state) : _fd(fd), _server(server), _state(state), _bodySize(0) {
 	std::cout << "New Client fd = '"<< _fd << "' has been created" << std::endl;
 	_request = NULL;
-
+	_start = time(NULL);
+	_timedOut = true;
 }
 
 ClientConnexion::~ClientConnexion() {
-	delete _server;
-	std::cout << "Client with fd " << _fd << "has been removed" << std::endl;
+	std::cout << "Client with fd " << _fd << " has been removed" << std::endl;
 }
 
 State	ClientConnexion::getState() {
 	return _state;
 }
 
+bool	ClientConnexion::hasTimedOut() {
+	time_t now = time(NULL);
+	if (now - _start > CLIENT_TIMEOUT)
+		_timedOut = true;
+	else
+		_timedOut = false;
+	return (_timedOut);
+}
+
 Server	*ClientConnexion::getServer() {
 	return _server;
 }
+
+bool	ClientConnexion::getKeep_alive() {
+	return keep_alive;
+}
+
 
 std::string	&ClientConnexion::getBufferIn() {
 	return bufferIn;
@@ -42,6 +56,11 @@ void ClientConnexion::setBufferOut(std::string buff) {
 void	ClientConnexion::clearBuffer() {
 	bufferIn.clear();
 	bufferOut.clear();
+	_bodySize = 0;
+}
+
+void	ClientConnexion::UpdateActivity() {
+	_start = time(NULL);
 }
 
 bool	ClientConnexion::checkChunked(size_t body_start)

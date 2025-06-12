@@ -7,6 +7,7 @@
 #include "Response.hpp"
 #include "Request.hpp"
 
+#define CLIENT_TIMEOUT 60
 
 enum State
 {
@@ -26,8 +27,11 @@ class ClientConnexion
 		State		_state;
 		std::string	bufferIn;
 		std::string	bufferOut;
-		int	_bodySize;
-		// Il faut aussi faire un time ici TODO
+		int			_bodySize;
+
+		time_t		_start; // TODO
+		bool		_timedOut;
+		bool		keep_alive;
 
 		//Response	*_response;
 		Request		*_request;
@@ -49,10 +53,13 @@ class ClientConnexion
 		Server		*getServer();
 		std::string	&getBufferIn();
 		std::string	&getBufferOut();
+		bool		hasTimedOut();
+		bool		getKeep_alive();
 
 		void	setBufferOut(std::string buff);
 		void	setState(State);
 		void	setRequest(Request *);
+		void	UpdateActivity();
 
 		void	clearBuffer();
 };
