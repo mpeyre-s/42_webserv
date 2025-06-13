@@ -20,21 +20,22 @@ ConfigParsing::ConfigParsing(std::string &configFile)
 			bracket++;
 		if (line.find('}') != std::string::npos)
 			bracket--;
-		serverBlock.push_back(line);
+		if (inServerBlock)
+			serverBlock.push_back(line);
 		if (bracket == 0 && inServerBlock)
 		{
 			_serverBlocks.push_back(serverBlock);
 			serverBlock.clear();
 			inServerBlock = false;
 		}
-		std::cout << bracket << std::endl;
 	}
-	for(std::vector<std::vector<std::string> >::const_iterator it1 = _serverBlocks.begin(); it1 != _serverBlocks.end(); it1++)
-	{
-		std::cout << "------SERVER------" << std::endl;
-		for (std::vector<std::string>::const_iterator it2 = it1->begin(); it2 != it1->end(); it2++)
-			std::cout << *it2 << std::endl; 
-	}
+	// DEBUG AFFICHAGE SERVEURS PAR BLOC
+	// for(std::vector<std::vector<std::string> >::const_iterator it1 = _serverBlocks.begin(); it1 != _serverBlocks.end(); it1++)
+	// {
+	// 	std::cout << "------SERVER------" << std::endl;
+	// 	for (std::vector<std::string>::const_iterator it2 = it1->begin(); it2 != it1->end(); it2++)
+	// 		std::cout << *it2 << std::endl; 
+	// }
 }
 
 ConfigParsing::~ConfigParsing() {}
@@ -44,9 +45,13 @@ std::vector<std::string> ConfigParsing::tokenizeLine(const std::string& line)
 	std::vector<std::string> tokens;
 	std::string currentToken;
 
-	for(size_t i = 0; i < line.length(); i++)
+	std::string lineTmp = line;
+	size_t commentPos = line.find('#');
+	if (commentPos != std::string::npos)
+		lineTmp = line.substr(0, commentPos);
+	for(size_t i = 0; i < lineTmp.length(); i++)
 	{
-		char c = line[i];
+		char c = lineTmp[i];
 		if (std::isspace(c))
 		{
 			if(!currentToken.empty())
@@ -55,7 +60,7 @@ std::vector<std::string> ConfigParsing::tokenizeLine(const std::string& line)
 				currentToken.clear();
 			}
 		}
-		else if (/* c == '{' || c == '}' || */ c == ';' || c == ':')
+		else if (c == ';' || c == ':')
 		{
 			if(!currentToken.empty())
 			{
@@ -141,11 +146,7 @@ Location setLocation(std::vector<std::vector<std::string> > LocationTMP, std::st
 				locTmp.error_pages[error] = err_path;
 			}
 		}
-		
 	}
-		std::cout << std::endl;
-		std::cout << std::endl;
-
 	return locTmp;
 }
 
@@ -260,7 +261,7 @@ void ConfigParsing::tokenizeServerBlock(const std::vector<std::string>& block, S
 			token.clear();
 		}
 	}
-	// //print tokens
+	// //DEBUG : Affichage des tokens
 	// int i = 0;
 	// for(std::vector<std::vector<std::string> >::const_iterator it1 = tokenizedBlock.begin(); it1 != tokenizedBlock.end(); it1++)
 	// {
@@ -270,12 +271,8 @@ void ConfigParsing::tokenizeServerBlock(const std::vector<std::string>& block, S
 	// 		std::cout << "[" << *it2 << "]" << " ";
 	// 	std::cout << std::endl; 
 	// }
-
 	parseServerBlock(tokenizedBlock, server);
 	tokenizedBlock.clear();
-
-	std::cout << std::endl; 
-	std::cout << std::endl; 
 	std::cout << std::endl; 
 }
 
@@ -306,8 +303,8 @@ void printServerTest(Server *server)
 			std::cout << "  Upload dir: " << loc.upload_dir << std::endl;
 		std::cout << "  Autoindex: " << (loc.auto_index ? "on" : "off") << std::endl;
 
-		// Client max body size
-		std::cout << "  Client max body size: " << loc.client_max_body_size << std::endl;
+		if (loc.client_max_body_size != 0)
+			std::cout << "  Client max body size: " << loc.client_max_body_size << std::endl;
 
 		for (size_t i = 0; i < loc.cgi_extensions.size(); ++i)
 		{
@@ -320,14 +317,12 @@ void printServerTest(Server *server)
 		if (!loc.cgi_path.empty())
 		std::cout << "  CGI path: " << loc.cgi_path << std::endl;
 
-		// Redirect
 		std::cout << "  Redirect: ";
 		if (loc.redirect_code > 0 && !loc.redirect_url.empty())
 			std::cout << loc.redirect_code << " -> " << loc.redirect_url << std::endl;
 		else
 			std::cout << "None" << std::endl;
 
-		// Error pages
 		std::cout << "  Error pages:" << std::endl;
 		for (std::map<int, std::string>::const_iterator ep = loc.error_pages.begin(); ep != loc.error_pages.end(); ++ep)
 			std::cout << "    " << ep->first << " => " << ep->second << std::endl;
@@ -336,15 +331,48 @@ void printServerTest(Server *server)
 	}
 }
 
+bool ConfigParsing::checkConformity(Server* server)
+{
+	if (server->getHost() != " 0.0.0.0")
+		return false;
+	if (server->getPort() != 8080)
+		return false;
+	return true;
 
+}
+
+bool ConfigParsing::isValidIp(std::string ip)
+{
+	int isPoint;
+	int pos;
+	std::string valueStr
+	int value;
+
+	for (size_t i = 0; i < ip.length(); i++)
+	{
+		if (ip[i] == '.')
+		{
+			pos = i;
+			valueStr = ip.substr(0, pos);
+
+		}
+	}
+}
 std::vector<Server*> ConfigParsing::createServerList() {
 	std::cout << "\033[32m[INFO] Configuration file parsed succesfuly\033[0m" << std::endl;
 	for (size_t i = 0; i < _serverBlocks.size(); i++)
 	{
 		Server* server = new Server;
 		tokenizeServerBlock(_serverBlocks[i], server);
-		//printServerTest(server);
+		printServerTest(server);
 		_list_servers.push_back(server);
+		if (!checkConformity(_list_servers[0]))
+			throw ConfigParsingError();
 	}
 	return _list_servers;
+}
+
+const char* ConfigParsing::ConfigParsingError::what() const throw()
+{
+	return ("Error in parsing");
 }

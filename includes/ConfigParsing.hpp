@@ -22,5 +22,12 @@ public:
 	void 					parseServerBlock(std::vector<std::vector<std::string> >	tokenizedBlock, Server* server);
 	std::vector<std::string> tokenizeLine(const std::string& line);
 	std::vector<Server*>	createServerList();
+	bool 					checkConformity(Server* server);
+	bool 					isValidIp(std::string ip);
+
+	class ConfigParsingError : public std::exception
+	{
+		const char* what() const throw();
+	};
 
 };
