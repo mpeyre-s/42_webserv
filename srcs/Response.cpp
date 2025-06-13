@@ -234,22 +234,22 @@ void	Response::setPath()
 void	Response::get()
 {
 	setPath();
-	if (_correctPath == true)
+	if (!_correctPath)
+		return;
+
+	if (pathIsFile(path))
 	{
-		if (pathIsFile(path))
-		{
-			_headers["Content-Type"] = getContentTypeFromPath(path);
-			_headers["Content-Length"] = intToStdString(getFileOctetsSize(path));
-			_body = pathfileToStringBackslashs(path);
-			return;
-		}
-		else
-		{
-			_headers["Content-Type"] = getContentTypeFromPath(auto_index_path);
-			_headers["Content-Length"] = intToStdString(getFileOctetsSize(auto_index_path));
-			_body = pathfileToStringBackslashs(auto_index_path);
-			return;
-		}
+		_headers["Content-Type"] = getContentTypeFromPath(path);
+		_headers["Content-Length"] = intToStdString(getFileOctetsSize(path));
+		_body = pathfileToStringBackslashs(path);
+		return;
+	}
+	else
+	{
+		_headers["Content-Type"] = getContentTypeFromPath(auto_index_path);
+		_headers["Content-Length"] = intToStdString(getFileOctetsSize(auto_index_path));
+		_body = pathfileToStringBackslashs(auto_index_path);
+		return;
 	}
 }
 
@@ -261,7 +261,12 @@ void	Response::parseBody(std::string body)
 
 void	Response::post()
 {
-	setPath();
+	setPath(); // vérifier quand meme que ça fonctionne bien pour un post
+	if (!_correctPath)
+		return ;
+
+	parseBody(_request->getBody());
+
 	if (_correctPath)
 	{
 		if (pathIsFile(path))
@@ -274,7 +279,6 @@ void	Response::post()
 			_headers["Content-Type"] = getContentTypeFromPath(auto_index_path);
 			_headers["Content-Length"] = intToStdString(getFileOctetsSize(auto_index_path));
 		}
-		parseBody(_request->getBody());
 	}
 	return;
 }
