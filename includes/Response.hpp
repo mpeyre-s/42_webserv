@@ -44,6 +44,8 @@ private:
 
 	void	setPath();
 	void	parseBody(std::string);
+	void	parseUrlEncodedBody(std::string); //TODO
+	void	parseJsonBody(std::string); //TODO
 
 public:
 	Response(Request *request ,Server* server, int status);

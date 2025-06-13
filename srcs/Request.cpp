@@ -111,3 +111,11 @@ bool	Request::isKeepAlive() {
 std::string Request::getBody() const {
 	return _body;
 }
+
+std::string	Request::getContentType()
+{
+	if (_headers.find("Content-Type") != _headers.end())
+		 return (_headers["Content-Type"]);
+	else
+		return ("error");
+}

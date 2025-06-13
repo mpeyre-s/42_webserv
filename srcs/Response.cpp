@@ -256,7 +256,19 @@ void	Response::get()
 
 void	Response::parseBody(std::string body)
 {
-	(void)body;
+	std::string ContentType = _request->getContentType();
+	std::cout << "Mon content type est ici : " << ContentType << std::endl;
+
+	if (ContentType == "application/x-www-form-urlencoded")
+		parseUrlEncodedBody(body);
+	else if (ContentType == "application/json")
+		parseJsonBody(body);
+	else
+	{
+		_status = 415;
+		_text_status = "Unsupported Media Type";
+		// TODO
+	}
 }
 
 void	Response::post()
@@ -264,23 +276,8 @@ void	Response::post()
 	setPath(); // vérifier quand meme que ça fonctionne bien pour un post
 	if (!_correctPath)
 		return ;
-
 	parseBody(_request->getBody());
 
-	if (_correctPath)
-	{
-		if (pathIsFile(path))
-		{
-			_headers["Content-Type"] = getContentTypeFromPath(path);
-			_headers["Content-Length"] = intToStdString(getFileOctetsSize(path));
-		}
-		else
-		{
-			_headers["Content-Type"] = getContentTypeFromPath(auto_index_path);
-			_headers["Content-Length"] = intToStdString(getFileOctetsSize(auto_index_path));
-		}
-	}
-	return;
 }
 
 void	Response::Delete() {

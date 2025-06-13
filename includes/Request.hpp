@@ -32,6 +32,7 @@ public:
 	std::string getPathToResource() const;
 	std::map<std::string, std::string> getHeaders() const;
 	std::string getBody() const;
+	std::string	getContentType();
 
 	bool	isKeepAlive();
 };
