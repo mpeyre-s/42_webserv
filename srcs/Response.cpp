@@ -209,6 +209,7 @@ void	Response::badRequest()
 void	Response::setPath()
 {
 	_text_status = "OK";
+	_correctPath = true;
 
 	path = cur_location.root + _request->getPathToResource().substr(cur_location.path.length());
 	if (path[path.length() - 1] == '/' && cur_location.auto_index == false)
@@ -220,6 +221,7 @@ void	Response::setPath()
 	//check if path is correct
 	if (isPathOpenable(path) == false)
 	{
+		std::cout << "false ?" << std::endl;
 		_status = 404;
 		_text_status = "Not Found";
 		_headers["Content-Type"] = "text/html";
@@ -231,7 +233,8 @@ void	Response::setPath()
 
 void	Response::get()
 {
-	if (_correctPath)
+	setPath();
+	if (_correctPath == true)
 	{
 		if (pathIsFile(path))
 		{
@@ -253,6 +256,7 @@ void	Response::get()
 
 void	Response::parseBody(std::string body)
 {
+	(void)body;
 }
 
 void	Response::post()
