@@ -46,7 +46,7 @@ static bool pathIsFile(std::string &path) {
 	return true;
 }
 
-static bool isPathOpenable(std::string &path) {
+static bool isPathOpenable(std::string &path) { // il faut fermer le fd ! /\/\/\/\/\/\//\/
 	if (pathIsFile(path)) {
 		int fd = open(path.c_str(), O_RDONLY);
 		if (fd == -1)
@@ -206,40 +206,72 @@ void	Response::badRequest()
 	}
 }
 
-void	Response::get()
+void	Response::setPath()
 {
 	_text_status = "OK";
 
-	std::string path = cur_location.root + _request->getPathToResource().substr(cur_location.path.length());
+	path = cur_location.root + _request->getPathToResource().substr(cur_location.path.length());
 	if (path[path.length() - 1] == '/' && cur_location.auto_index == false)
 		path.append(cur_location.index);
 	else if (_request->getPathToResource() == potential_server)
 		path.append("/");
 	std::cout << "PATH: " << path << std::endl;
-	if (isPathOpenable(path) == false) {
+
+	//check if path is correct
+	if (isPathOpenable(path) == false)
+	{
 		_status = 404;
 		_text_status = "Not Found";
 		_headers["Content-Type"] = "text/html";
 		_headers["Content-Length"] = intToStdString(getFileOctetsSize(not_found_path));
 		_body = pathfileToStringBackslashs(not_found_path);
-		return;
-	} else if (pathIsFile(path)) {
-		_headers["Content-Type"] = getContentTypeFromPath(path);
-		_headers["Content-Length"] = intToStdString(getFileOctetsSize(path));
-		_body = pathfileToStringBackslashs(path);
-		return;
-	} else {
-		_headers["Content-Type"] = getContentTypeFromPath(auto_index_path);
-		_headers["Content-Length"] = intToStdString(getFileOctetsSize(auto_index_path));
-		_body = pathfileToStringBackslashs(auto_index_path);
-		return;
+		_correctPath = false;
 	}
 }
 
-void	Response::post() {
-	_headers["Content-Type"] = "text/brut";
-	_headers["Content-Length"] = "4";
-	_body = "OK\r\n";
+void	Response::get()
+{
+	if (_correctPath)
+	{
+		if (pathIsFile(path))
+		{
+			_headers["Content-Type"] = getContentTypeFromPath(path);
+			_headers["Content-Length"] = intToStdString(getFileOctetsSize(path));
+			_body = pathfileToStringBackslashs(path);
+			return;
+		}
+		else
+		{
+			_headers["Content-Type"] = getContentTypeFromPath(auto_index_path);
+			_headers["Content-Length"] = intToStdString(getFileOctetsSize(auto_index_path));
+			_body = pathfileToStringBackslashs(auto_index_path);
+			return;
+		}
+	}
+}
+
+
+void	Response::parseBody(std::string body)
+{
+}
+
+void	Response::post()
+{
+	setPath();
+	if (_correctPath)
+	{
+		if (pathIsFile(path))
+		{
+			_headers["Content-Type"] = getContentTypeFromPath(path);
+			_headers["Content-Length"] = intToStdString(getFileOctetsSize(path));
+		}
+		else
+		{
+			_headers["Content-Type"] = getContentTypeFromPath(auto_index_path);
+			_headers["Content-Length"] = intToStdString(getFileOctetsSize(auto_index_path));
+		}
+		parseBody(_request->getBody());
+	}
 	return;
 }
 
@@ -264,7 +296,6 @@ void	Response::process() {
 std::string Response::getStringResponse() {
 	// build string -> buffer_out
 	process();
-	std::cout << "TeST" << std::endl;
 	std::string result;
 	result.append(_http_version + " " + intToStdString(_status) + " " + _text_status + "\r\n");
 	for (std::map<std::string, std::string>::iterator it = _headers.begin(); it != _headers.end(); ++it) {

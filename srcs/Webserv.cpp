@@ -123,7 +123,7 @@ void	Webserv::handleClientReading(int fd)
 			Request *request = new Request(client->getBufferIn());
 			Response* response = request->process(client->getServer());
 			client->setBufferOut(response->getStringResponse());
-			//client->setKeepAlive(request->isKeepAlive());
+			client->setKeepAlive(request->isKeepAlive());
 
 			delete request;
 			delete response;

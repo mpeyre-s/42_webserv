@@ -39,6 +39,11 @@ private:
 
 	// server params
 	std::string potential_server;
+	std::string path;
+	bool		_correctPath;
+
+	void	setPath();
+	void	parseBody(std::string);
 
 public:
 	Response(Request *request ,Server* server, int status);
