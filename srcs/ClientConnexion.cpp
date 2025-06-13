@@ -7,7 +7,7 @@ ClientConnexion::ClientConnexion(int fd, Server *server, State state) : _fd(fd),
 }
 
 ClientConnexion::~ClientConnexion() {
-	std::cout << "Client with fd " << _fd << " has been removed" << std::endl;
+	(void)_fd;
 }
 
 State	ClientConnexion::getState() {

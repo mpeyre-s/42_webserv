@@ -33,5 +33,7 @@ public:
 	std::map<std::string, std::string> getHeaders() const;
 	std::string getBody() const;
 
+	void setPathToResource(std::string &new_path);
+
 	bool	isKeepAlive();
 };

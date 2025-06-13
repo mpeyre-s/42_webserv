@@ -2,7 +2,7 @@
 #include "../includes/Request.hpp"
 
 static std::string getContentTypeFromPath(std::string &path) {
-	const char *extensions[] = {".html", ".css", ".js", ".json", ".xml", ".bin", ".exe", ".dll", ".jpg", ".jpeg", ".png", ".gif", ".mp3", ".mp4", ".pdf", ".zip", ".txt", NULL};
+	const char *extensions[] = {".html", ".css", ".js", ".json", ".xml", ".bin", ".exe", ".dll", ".jpg", ".jpeg", ".png", ".svg", ".gif", ".mp3", ".mp4", ".pdf", ".zip", ".txt", NULL};
 	for (size_t i = 0; extensions[i]; i++) {
 		size_t pos = path.find(extensions[i]);
 		if (pos != std::string::npos && (pos + strlen(extensions[i]) == path.length())) {
@@ -16,6 +16,8 @@ static std::string getContentTypeFromPath(std::string &path) {
 				return "application/json";
 			} else if (strcmp(extensions[i], ".xml") == 0) {
 				return "application/xml";
+			} else if (strcmp(extensions[i], ".svg") == 0) {
+				return "image/svg+xml";
 			} else if (strcmp(extensions[i], ".bin") == 0 || strcmp(extensions[i], ".exe") == 0 || strcmp(extensions[i], ".dll") == 0) {
 				return "application/octet-stream";
 			} else if (strcmp(extensions[i], ".jpg") == 0 || strcmp(extensions[i], ".jpeg") == 0) {
@@ -46,16 +48,18 @@ static bool pathIsFile(std::string &path) {
 	return true;
 }
 
-static bool isPathOpenable(std::string &path) { // il faut fermer le fd ! /\/\/\/\/\/\//\/
+static bool isPathOpenable(std::string &path) {
 	if (pathIsFile(path)) {
 		int fd = open(path.c_str(), O_RDONLY);
 		if (fd == -1)
 			return false;
+		close(fd);
 		return true;
 	} else {
 		DIR *pDir = opendir(path.c_str());
 		if (pDir == NULL)
 			return false;
+		closedir(pDir);
 		return true;
 	}
 }
@@ -74,19 +78,47 @@ static int getFileOctetsSize(std::string &path) {
 	return 0;
 }
 
+static bool isPathFileBinary(std::string &path) {
+	const char* binaryExtensions[] = {".bin", ".exe", ".dll", ".jpg", ".jpeg", ".png", ".svg", ".gif", ".mp3", ".mp4", ".pdf", ".zip", NULL};
+	for (int i = 0; binaryExtensions[i]; i++) {
+		size_t pos = path.find(binaryExtensions[i]);
+		if (pos != std::string::npos && (pos + strlen(binaryExtensions[i]) == path.length())) {
+			return true;
+		}
+	}
+	return false;
+}
+
 static std::string pathfileToStringBackslashs(std::string &path) {
 	std::string result;
-	std::ifstream inputFile(path.c_str());
 
-	if (!inputFile.is_open())
-		return "";
+	if (isPathFileBinary(path)) {
+		std::ifstream file(path.c_str(), std::ios::in | std::ios::binary);
+		if (!file.is_open())
+			return "";
 
-	std::string line;
-	while (std::getline(inputFile, line)) {
-		result.append(line + "\r\n");
+		file.seekg(0, std::ios::end);
+		std::streamoff size = file.tellg();
+		file.seekg(0, std::ios::beg);
+
+		if (size > 0) {
+			char* buffer = new char[size];
+			file.read(buffer, size);
+			result.assign(buffer, size);
+			delete[] buffer;
+		}
+		file.close();
+	} else {
+		std::ifstream inputFile(path.c_str());
+		if (!inputFile.is_open())
+			return "";
+
+		std::string line;
+		while (std::getline(inputFile, line)) {
+			result.append(line + "\n");
+		}
+		inputFile.close();
 	}
-
-	inputFile.close();
 	return result;
 }
 
@@ -124,7 +156,7 @@ Response::Response(Request *request, Server* server, int status) : _request(requ
 	_headers["Date"] = getDate();
 	_headers["Server"] = "Webserv/1.0 (42)";
 	if (_request->isKeepAlive() == false)
-		_headers["Connection"] = "Closed";
+		_headers["Connection"] = "close";
 	else
 		_headers["Connection"] = "keep-alive";
 
@@ -141,7 +173,6 @@ Response::Response(Request *request, Server* server, int status) : _request(requ
 			}
 		}
 	}
-	std::cout << "Potential Server: " << potential_server << std::endl;
 
 	// class instant with all config params for the current endpoint asked
 	cur_location = locations_nested[potential_server];
@@ -216,12 +247,10 @@ void	Response::setPath()
 		path.append(cur_location.index);
 	else if (_request->getPathToResource() == potential_server)
 		path.append("/");
-	std::cout << "PATH: " << path << std::endl;
 
 	//check if path is correct
 	if (isPathOpenable(path) == false)
 	{
-		std::cout << "false ?" << std::endl;
 		_status = 404;
 		_text_status = "Not Found";
 		_headers["Content-Type"] = "text/html";
@@ -236,6 +265,12 @@ void	Response::get()
 	setPath();
 	if (!_correctPath)
 		return;
+
+	if (cur_location.redirect_code != 0 && !cur_location.redirect_url.empty()) {
+		_status = 301;
+		_headers["Location"] = cur_location.redirect_url;
+		return;
+	}
 
 	if (pathIsFile(path))
 	{
@@ -252,7 +287,6 @@ void	Response::get()
 		return;
 	}
 }
-
 
 void	Response::parseBody(std::string body)
 {

@@ -111,3 +111,7 @@ bool	Request::isKeepAlive() {
 std::string Request::getBody() const {
 	return _body;
 }
+
+void Request::setPathToResource(std::string &new_path) {
+	_path_to_resource = new_path;
+}
