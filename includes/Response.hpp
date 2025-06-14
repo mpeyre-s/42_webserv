@@ -3,6 +3,7 @@
 #include <string>
 #include <iostream>
 #include <map>
+#include <vector>
 #include <sstream>
 #include <fstream>
 #include <sys/stat.h>
@@ -22,12 +23,15 @@ private:
 	Server* _server;
 	Location cur_location;
 
+
 	// Response
 	int			_status;
 	bool		_badRequest;
 	std::string	_text_status;
 	std::string	_http_version;
 	std::map<std::string, std::string> _headers;
+	std::string	_filename;
+	std::string	_contentType;
 	std::string _body;
 
 	//default html error page
@@ -37,15 +41,19 @@ private:
 	std::string auto_index_path;
 	std::string request_entity_too_large_path;
 
+	std::map<std::string, std::string> _file_types; // ext -> content type
+
 	// server params
 	std::string potential_server;
 	std::string path;
 	bool		_correctPath;
 
-	void	setPath();
-	void	parseBody(std::string);
-	void	parseUrlEncodedBody(std::string); //TODO
-	void	parseJsonBody(std::string); //TODO
+	void		setPath();
+	void		parseBody(std::string);
+	void		parseUrlEncodedBody(std::string); //TODO
+	void		parseJsonBody(std::string); //TODO
+	std::string	checkHeader();
+	void		parsePostHeader(std::istringstream& iss, std::string& line);
 
 public:
 	Response(Request *request ,Server* server, int status);

@@ -34,5 +34,7 @@ public:
 	std::string getBody() const;
 	std::string	getContentType();
 
+	void setPathToResource(std::string &new_path);
+
 	bool	isKeepAlive();
 };

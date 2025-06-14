@@ -86,7 +86,6 @@ void Webserv::handleNewConnexion(int server_fd)
 
 	int client_fd = accept(server_fd, reinterpret_cast<sockaddr*>(&client_addr), &client_len);
 	if (client_fd < 0) {
-		std::cerr << "Error accept function" << std::endl;
 		return ;
 	}
 
@@ -125,6 +124,8 @@ void	Webserv::handleClientReading(int fd)
 			client->setBufferOut(response->getStringResponse());
 			client->setKeepAlive(request->isKeepAlive());
 
+			//std::cout << "===== BUFFER OUT =====" << std::endl << response->getStringResponse() << std::endl;
+
 			delete request;
 			delete response;
 
@@ -141,7 +142,6 @@ void	Webserv::handleClientReading(int fd)
 			return ;
 		else
 		{
-			std::cerr << "Erreur read pour client dont le fd est : " << fd << std::endl;
 			removeClient(fd);
 		}
 	}
@@ -182,7 +182,6 @@ void	Webserv::handleClientWriting(int fd)
 			return ;
 		else
 		{
-			std::cerr << "Erreur write pour client dont le fd est : " << fd << std::endl;
 			removeClient(fd);
 		}
 	}
@@ -190,8 +189,6 @@ void	Webserv::handleClientWriting(int fd)
 
 void Webserv::removeClient(int fd)
 {
-	std::cout << "Removing client with fd: " << fd << std::endl;
-
 	// Supprimer du vecteur _fds
 	for (std::vector<pollfd>::iterator it = _fds.begin(); it != _fds.end(); ++it)
 	{

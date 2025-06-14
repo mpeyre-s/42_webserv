@@ -21,20 +21,23 @@
 
 	<main>
 		<section>
-			<h1>Welcome to WebServ</h2>
-			<p>This is a demonstration of a web server created for educational purposes.</p>
-			<p>This project aims to create an HTTP web server, with a focus on non-blocking behavior. Dive into the world of network programming and explore the fundamentals of web servers.</p>
+			<h1>Manage Files</h2>
+			<p>Here you can upload and delete files and see your modification in "Library" section of this site.</p>
 		</section>
 
-		<section>
-			<h2>Features</h2>
-			<ul>
-				<li>HTTP/1.1 protocol support</li>
-				<li>Multiple virtual servers</li>
-				<li>Default error pages</li>
-				<li>File upload capabilities</li>
-				<li>CGI execution</li>
-			</ul>
+		<section class="card">
+			<h2>Upload</h2>
+			<form action="/upload" method="post" enctype="multipart/form-data">
+				<input type="file" name="file" required>
+				<button type="submit">Upload</button>
+			</form>
+		</section>
+		<section class="card">
+			<h2>Delete</h2>
+			<form action="/files" method="delete">
+				<input type="text" name="filename" placeholder="Enter filename to delete" required>
+				<button type="submit">Delete</button>
+			</form>
 		</section>
 	</main>
 
@@ -105,6 +108,48 @@
 		position: fixed;
 		bottom: 0;
 		width: 100%;
+	}
+
+	.card {
+		background-color: #4a89dc;
+		color: white;
+		border-radius: 10px;
+		box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+		padding: 1rem;
+		margin: 1rem 0;
+	}
+
+	.card h2 {
+		margin-top: 0;
+	}
+
+	.card form {
+		display: flex;
+		flex-direction: column;
+		gap: 1rem;
+	}
+
+	.card input[type="file"],
+	.card input[type="text"] {
+		padding: 0.5rem;
+		border: none;
+		border-radius: 5px;
+	}
+
+	.card button {
+		background-color: #fff;
+		color: #4a89dc;
+		border: none;
+		border-radius: 5px;
+		padding: 0.5rem 1rem;
+		cursor: pointer;
+		font-weight: bold;
+		transition: background 0.2s, color 0.2s;
+	}
+
+	.card button:hover {
+		background-color: #357ab8;
+		color: #fff;
 	}
 </style>
 </html>

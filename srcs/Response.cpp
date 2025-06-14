@@ -1,44 +1,6 @@
 #include "../includes/Response.hpp"
 #include "../includes/Request.hpp"
 
-static std::string getContentTypeFromPath(std::string &path) {
-	const char *extensions[] = {".html", ".css", ".js", ".json", ".xml", ".bin", ".exe", ".dll", ".jpg", ".jpeg", ".png", ".gif", ".mp3", ".mp4", ".pdf", ".zip", ".txt", NULL};
-	for (size_t i = 0; extensions[i]; i++) {
-		size_t pos = path.find(extensions[i]);
-		if (pos != std::string::npos && (pos + strlen(extensions[i]) == path.length())) {
-			if (strcmp(extensions[i], ".html") == 0) {
-				return "text/html";
-			} else if (strcmp(extensions[i], ".css") == 0) {
-				return "text/css";
-			} else if (strcmp(extensions[i], ".js") == 0) {
-				return "application/javascript";
-			} else if (strcmp(extensions[i], ".json") == 0) {
-				return "application/json";
-			} else if (strcmp(extensions[i], ".xml") == 0) {
-				return "application/xml";
-			} else if (strcmp(extensions[i], ".bin") == 0 || strcmp(extensions[i], ".exe") == 0 || strcmp(extensions[i], ".dll") == 0) {
-				return "application/octet-stream";
-			} else if (strcmp(extensions[i], ".jpg") == 0 || strcmp(extensions[i], ".jpeg") == 0) {
-				return "image/jpeg";
-			} else if (strcmp(extensions[i], ".png") == 0) {
-				return "image/png";
-			} else if (strcmp(extensions[i], ".gif") == 0) {
-				return "image/gif";
-			} else if (strcmp(extensions[i], ".mp3") == 0) {
-				return "audio/mpeg";
-			} else if (strcmp(extensions[i], ".mp4") == 0) {
-				return "video/mp4";
-			} else if (strcmp(extensions[i], ".pdf") == 0) {
-				return "application/pdf";
-			} else if (strcmp(extensions[i], ".zip") == 0) {
-				return "application/zip";
-			} else if (strcmp(extensions[i], ".txt") == 0) {
-				return "text/plain";
-			}
-		}
-	}
-	return "text/brut";
-}
 
 static bool pathIsFile(std::string &path) {
 	if (path[path.length() - 1] == '/')
@@ -46,16 +8,18 @@ static bool pathIsFile(std::string &path) {
 	return true;
 }
 
-static bool isPathOpenable(std::string &path) { // il faut fermer le fd ! /\/\/\/\/\/\//\/
+static bool isPathOpenable(std::string &path) {
 	if (pathIsFile(path)) {
 		int fd = open(path.c_str(), O_RDONLY);
 		if (fd == -1)
 			return false;
+		close(fd);
 		return true;
 	} else {
 		DIR *pDir = opendir(path.c_str());
 		if (pDir == NULL)
 			return false;
+		closedir(pDir);
 		return true;
 	}
 }
@@ -74,19 +38,47 @@ static int getFileOctetsSize(std::string &path) {
 	return 0;
 }
 
+static bool isPathFileBinary(std::string &path) {
+	const char* binaryExtensions[] = {".bin", ".exe", ".dll", ".jpg", ".jpeg", ".png", ".svg", ".gif", ".mp3", ".mp4", ".pdf", ".zip", NULL};
+	for (int i = 0; binaryExtensions[i]; i++) {
+		size_t pos = path.find(binaryExtensions[i]);
+		if (pos != std::string::npos && (pos + strlen(binaryExtensions[i]) == path.length())) {
+			return true;
+		}
+	}
+	return false;
+}
+
 static std::string pathfileToStringBackslashs(std::string &path) {
 	std::string result;
-	std::ifstream inputFile(path.c_str());
 
-	if (!inputFile.is_open())
-		return "";
+	if (isPathFileBinary(path)) {
+		std::ifstream file(path.c_str(), std::ios::in | std::ios::binary);
+		if (!file.is_open())
+			return "";
 
-	std::string line;
-	while (std::getline(inputFile, line)) {
-		result.append(line + "\r\n");
+		file.seekg(0, std::ios::end);
+		std::streamoff size = file.tellg();
+		file.seekg(0, std::ios::beg);
+
+		if (size > 0) {
+			char* buffer = new char[size];
+			file.read(buffer, size);
+			result.assign(buffer, size);
+			delete[] buffer;
+		}
+		file.close();
+	} else {
+		std::ifstream inputFile(path.c_str());
+		if (!inputFile.is_open())
+			return "";
+
+		std::string line;
+		while (std::getline(inputFile, line)) {
+			result.append(line + "\n");
+		}
+		inputFile.close();
 	}
-
-	inputFile.close();
 	return result;
 }
 
@@ -124,7 +116,7 @@ Response::Response(Request *request, Server* server, int status) : _request(requ
 	_headers["Date"] = getDate();
 	_headers["Server"] = "Webserv/1.0 (42)";
 	if (_request->isKeepAlive() == false)
-		_headers["Connection"] = "Closed";
+		_headers["Connection"] = "close";
 	else
 		_headers["Connection"] = "keep-alive";
 
@@ -141,7 +133,6 @@ Response::Response(Request *request, Server* server, int status) : _request(requ
 			}
 		}
 	}
-	std::cout << "Potential Server: " << potential_server << std::endl;
 
 	// class instant with all config params for the current endpoint asked
 	cur_location = locations_nested[potential_server];
@@ -216,12 +207,10 @@ void	Response::setPath()
 		path.append(cur_location.index);
 	else if (_request->getPathToResource() == potential_server)
 		path.append("/");
-	std::cout << "PATH: " << path << std::endl;
 
 	//check if path is correct
 	if (isPathOpenable(path) == false)
 	{
-		std::cout << "false ?" << std::endl;
 		_status = 404;
 		_text_status = "Not Found";
 		_headers["Content-Type"] = "text/html";
@@ -236,6 +225,12 @@ void	Response::get()
 	setPath();
 	if (!_correctPath)
 		return;
+
+	if (cur_location.redirect_code != 0 && !cur_location.redirect_url.empty()) {
+		_status = 301;
+		_headers["Location"] = cur_location.redirect_url;
+		return;
+	}
 
 	if (pathIsFile(path))
 	{
@@ -253,22 +248,91 @@ void	Response::get()
 	}
 }
 
-
-void	Response::parseBody(std::string body)
+std::string	Response::checkHeader()
 {
 	std::string ContentType = _request->getContentType();
 	std::cout << "Mon content type est ici : " << ContentType << std::endl;
-
-	if (ContentType == "application/x-www-form-urlencoded")
-		parseUrlEncodedBody(body);
-	else if (ContentType == "application/json")
-		parseJsonBody(body);
-	else
+	size_t pos = ContentType.find("multipart/form-data");
+	if (pos == std::string::npos)
 	{
-		_status = 415;
-		_text_status = "Unsupported Media Type";
-		// TODO
+		// Que dire ? 415 status ?
+		return "error";
 	}
+	std::string boundary = "boundary=";
+	size_t pos = ContentType.find(boundary);
+	if (pos == std::string::npos)
+	{
+		// Que dire ? 415 status ?
+		return "error";
+	}
+
+	size_t start = pos + boundary.length();
+	size_t end = ContentType.find(';', start);
+	if (end == std::string::npos)
+		end = ContentType.length();
+
+	std::string real_boundary = "--" + ContentType.substr(start, end - start);
+
+	return real_boundary;
+}
+void Response::parsePostHeader(std::istringstream &iss, std::string &line)
+{
+	std::cout << "===== headers détecté ======" << std::endl;
+	while (std::getline(iss, line) && line != "\r" && !line.empty())
+	{
+		if (line.find("Content-Disposition:") != std::string::npos)
+		{
+			size_t start = line.find("filename=\"");
+			if (start != std::string::npos)
+				start += 10;
+			size_t end = line.find('"', start);
+			_filename = line.substr(start, end - start);
+			std::cout << "filename = " << _filename << std::endl;
+		}
+		else if (line.find("Content-Type:") != std::string::npos)
+		{
+			size_t typeStart = line.find(":") + 2;
+			_contentType = line.substr(typeStart);
+			std::cout << "Content type = " << _contentType << std::endl;
+		}
+	}
+}
+void	Response::parseBody(std::string body)
+{
+	std::string boundary = checkHeader();
+	if (boundary == "error")
+		return ;
+	std::istringstream iss(body);
+	std::string line;
+	while (std::getline(iss, line))
+	{
+		if (line == boundary)
+		{
+			// 1. Lire headers
+			std::cout << "===== headers détecté ======" << std::endl;
+			parsePostHeader(iss, line);
+			// 2. Lire le body
+
+			std::cout << "======= Body part =========" << std::endl;
+			for (std::map<std::string, std::string>::iterator it = _file_types.begin(); it != _file_types.end(); ++it)
+			{
+				if (it->second == _contentType)
+					std::string extension = it->first;
+			}
+			while (std::getline(iss, line) && line != boundary + "--")
+			{
+
+			}
+
+		}
+	}
+
+	// else
+	// {
+	// 	_status = 415;
+	// 	_text_status = "Unsupported Media Type";
+	// 	// TODO
+	// }
 }
 
 void	Response::post()

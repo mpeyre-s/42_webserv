@@ -69,6 +69,7 @@ Request::Request(std::string &raw) {
 Response* Request::process(Server* server) {
 	std::string log = _method_type + " " + _path_to_resource + " " + _http_version;
 	std::cout << "\033[35m[TRACE] " << log << "\033[0m" << std::endl;
+	std::cout << "Body : " << std::endl << _body << std::endl;
 	Request *request_copy = new Request(*this); // qui gere le delete ici ?
 	return new Response(request_copy, server, _parsing_error);
 }
@@ -118,4 +119,8 @@ std::string	Request::getContentType()
 		 return (_headers["Content-Type"]);
 	else
 		return ("error");
+}
+
+void	Request::setPathToResource(std::string &new_path) {
+	_path_to_resource = new_path;
 }
