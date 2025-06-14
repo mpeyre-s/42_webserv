@@ -29,42 +29,10 @@ static std::string generateAutoIndexHtml(const std::string &path, const std::str
 	return result;
 }
 
-static std::string getContentTypeFromPath(std::string &path) {
-	const char *extensions[] = {".html", ".css", ".js", ".json", ".xml", ".bin", ".exe", ".dll", ".jpg", ".jpeg", ".png", ".svg", ".gif", ".mp3", ".mp4", ".pdf", ".zip", ".txt", NULL};
-	for (size_t i = 0; extensions[i]; i++) {
-		size_t pos = path.find(extensions[i]);
-		if (pos != std::string::npos && (pos + strlen(extensions[i]) == path.length())) {
-			if (strcmp(extensions[i], ".html") == 0) {
-				return "text/html";
-			} else if (strcmp(extensions[i], ".css") == 0) {
-				return "text/css";
-			} else if (strcmp(extensions[i], ".js") == 0) {
-				return "application/javascript";
-			} else if (strcmp(extensions[i], ".json") == 0) {
-				return "application/json";
-			} else if (strcmp(extensions[i], ".xml") == 0) {
-				return "application/xml";
-			} else if (strcmp(extensions[i], ".svg") == 0) {
-				return "image/svg+xml";
-			} else if (strcmp(extensions[i], ".bin") == 0 || strcmp(extensions[i], ".exe") == 0 || strcmp(extensions[i], ".dll") == 0) {
-				return "application/octet-stream";
-			} else if (strcmp(extensions[i], ".jpg") == 0 || strcmp(extensions[i], ".jpeg") == 0) {
-				return "image/jpeg";
-			} else if (strcmp(extensions[i], ".png") == 0) {
-				return "image/png";
-			} else if (strcmp(extensions[i], ".gif") == 0) {
-				return "image/gif";
-			} else if (strcmp(extensions[i], ".mp3") == 0) {
-				return "audio/mpeg";
-			} else if (strcmp(extensions[i], ".mp4") == 0) {
-				return "video/mp4";
-			} else if (strcmp(extensions[i], ".pdf") == 0) {
-				return "application/pdf";
-			} else if (strcmp(extensions[i], ".zip") == 0) {
-				return "application/zip";
-			} else if (strcmp(extensions[i], ".txt") == 0) {
-				return "text/plain";
-			}
+std::string Response::getContentTypeFromPath(std::string &path) {
+	for (std::map<std::string, std::string>::iterator it = _file_types.begin(); it != _file_types.end(); it++) {
+		if (path.length() >= it->first.length() && path.compare(path.length() - it->first.length(), it->first.length(), it->first) == 0) {
+			return it->second;
 		}
 	}
 	return "text/brut";
@@ -234,6 +202,24 @@ Response::Response(Request *request, Server* server, int status) : _request(requ
 	else
 		_badRequest = false;
 
+	_file_types[".html"] = "text/html";
+	_file_types[".css"] = "text/css";
+	_file_types[".js"] = "application/javascript";
+	_file_types[".json"] = "application/json";
+	_file_types[".xml"] = "application/xml";
+	_file_types[".svg"] = "image/svg+xml";
+	_file_types[".bin"] = "application/octet-stream";
+	_file_types[".exe"] = "application/octet-stream";
+	_file_types[".dll"] = "application/octet-stream";
+	_file_types[".jpg"] = "image/jpeg";
+	_file_types[".jpeg"] = "image/jpeg";
+	_file_types[".png"] = "image/png";
+	_file_types[".gif"] = "image/gif";
+	_file_types[".mp3"] = "audio/mpeg";
+	_file_types[".mp4"] = "video/mp4";
+	_file_types[".pdf"] = "application/pdf";
+	_file_types[".zip"] = "application/zip";
+	_file_types[".txt"] = "text/plain";
 }
 
 // bad request + internal server error + Request Entity Too Large

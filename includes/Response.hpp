@@ -38,6 +38,8 @@ private:
 	std::string auto_index_path;
 	std::string request_entity_too_large_path;
 
+	std::map<std::string, std::string> _file_types;
+
 	// server params
 	std::string potential_server;
 	std::string path;
@@ -45,6 +47,7 @@ private:
 
 	void	setPath();
 	void	parseBody(std::string);
+	std::string getContentTypeFromPath(std::string &path);
 
 public:
 	Response(Request *request ,Server* server, int status);
