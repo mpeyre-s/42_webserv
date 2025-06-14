@@ -145,7 +145,6 @@ Response::Response(Request *request, Server* server, int status) : _request(requ
 	internal_server_error_path = "resources/internal_server_error.html";
 	not_found_path = "resources/not_found.html";
 	request_entity_too_large_path = "resources/request_entity_too_large.html";
-	unsupported_media_path = "ressources/unsupported_media.html";
 
 	// default params
 	_http_version = "HTTP/1.1";
@@ -226,42 +225,29 @@ Response::Response(Request *request, Server* server, int status) : _request(requ
 // bad request + internal server error + Request Entity Too Large
 void	Response::badRequest()
 {
-	// if (_status == 400) {
-	// 	_text_status = "Bad Request";
-	// 	_headers["Content-Type"] = "text/html";
-	// 	_headers["Content-Length"] = intToStdString(getFileOctetsSize(bad_request_path));
-	// 	_body = pathfileToStringBackslashs(bad_request_path);
-	// 	return;
-	// }
-	// else if (_status == 415) {
-	// 	_text_status = "Unsupported Media Type";
-	// 	_headers["Content-Type"] = "text/html";
-	// 	_headers["Content-Length"] = intToStdString(getFileOctetsSize(unsupported_media_path));
-	// 	_body = pathfileToStringBackslashs(unsupported_media_path);
-	// }
-	// else if (_status == 500) {
-	// 	_text_status = "Internal Server Error";
-	// 	_headers["Content-Type"] = "text/html";
-	// 	_headers["Content-Length"] = intToStdString(getFileOctetsSize(internal_server_error_path));
-	// 	_body = pathfileToStringBackslashs(internal_server_error_path);
-	// }
-	// else if ((int)_request->getBody().size() > cur_location.client_max_body_size) {
-	// 	_status = 413;
-	// 	_text_status = "Request Entity Too Large";
-	// 	_headers["Content-Type"] = "text/html";
-	// 	_headers["Content-Length"] = intToStdString(getFileOctetsSize(request_entity_too_large_path));
-	// 	_body = pathfileToStringBackslashs(request_entity_too_large_path);
-	// 	return;
-	// }
-	// else if (_status != 200) {
-	// 	_status = 500;
-	// 	_text_status = "Internal Server Error";
-	// 	_headers["Content-Type"] = "text/html";
-	// 	_headers["Content-Length"] = intToStdString(getFileOctetsSize(internal_server_error_path));
-	// 	_body = pathfileToStringBackslashs(internal_server_error_path);
-	// 	return;
-	// }
-	return ;
+	if (_status == 400) {
+		_text_status = "Bad Request";
+		_headers["Content-Type"] = "text/html";
+		_headers["Content-Length"] = intToStdString(getFileOctetsSize(bad_request_path));
+		_body = pathfileToStringBackslashs(bad_request_path);
+		return;
+	}
+	else if ((int)_request->getBody().size() > cur_location.client_max_body_size) {
+		_status = 413;
+		_text_status = "Request Entity Too Large";
+		_headers["Content-Type"] = "text/html";
+		_headers["Content-Length"] = intToStdString(getFileOctetsSize(request_entity_too_large_path));
+		_body = pathfileToStringBackslashs(request_entity_too_large_path);
+		return;
+	}
+	else if (_status != 200) {
+		_status = 500;
+		_text_status = "Internal Server Error";
+		_headers["Content-Type"] = "text/html";
+		_headers["Content-Length"] = intToStdString(getFileOctetsSize(internal_server_error_path));
+		_body = pathfileToStringBackslashs(internal_server_error_path);
+		return;
+	}
 }
 
 void	Response::setPath()
@@ -352,7 +338,7 @@ std::string	Response::checkHeader()
 void Response::parsePostHeader(std::istringstream &iss, std::string &line)
 {
 	std::cout << "===== headers détecté ======" << std::endl;
-	while (std::getline(iss, line) && line != "\r" && !line.empty())
+	while (std::getline(iss, line) && line != "\r" && !line.empty()) // faut peut etre check si il y a 0 header
 	{
 		if (line.find("Content-Disposition:") != std::string::npos)
 		{
@@ -394,6 +380,8 @@ void		Response::parseBodyText(std::istringstream &iss, std::string &line)
 	std::cout << "Le path ou sera televerser le fichier est : " << file_path << std::endl;
 	std::ofstream outfile(file_path.c_str());
 	if (!outfile.is_open()) {
+		_status = 500;
+		badRequest();
 		std::cerr << "Error writing file" << std::endl; // il faut mieux le gerer
 		return;
 	}
@@ -429,8 +417,8 @@ void	Response::parseBody(std::string body)
 			// 2. Lire le body
 			std::string extension = checkExtension();
 			if (extension.empty()) {
-				//_status = 415;
-				//badRequest();
+				_status = 415;
+				badRequest();
 				return ;
 			}
 			if (isPathFileBinary(extension))
@@ -448,19 +436,17 @@ void	Response::parseBody(std::string body)
 
 void	Response::post()
 {
-	// setPath();
-	// if (!_correctPath)
-	// 	return ;
-	// parseBody(_request->getBody());
+	setPath();
+	if (!_correctPath)
+		return ;
+	parseBody(_request->getBody());
 
-	// std::cout << "le statut est : " << _status << std::endl;
-	// _status = 201;
-	// _text_status = "Created";
-	// _body = "Upload successful.\n";
-	// _headers["Content-Type"] = "text/plain";
-	// _headers["Content-Length"] = intToStdString(_body.length());
-	return ;
-
+	std::cout << "le statut est : " << _status << std::endl;
+	_status = 201;
+	_text_status = "Created";
+	_body = "Upload successful.\n";
+	_headers["Content-Type"] = "text/plain";
+	_headers["Content-Length"] = intToStdString(_body.length());
 }
 
 void	Response::Delete() {
@@ -507,3 +493,4 @@ Response::~Response() {}
 // 		<p>The media type provided in the request is not supported by this server.</p>
 // 	</body>
 // </html>
+
