@@ -20,6 +20,10 @@ private:
 	std::map<std::string, std::string> _headers;
 	std::string _body;
 
+	std::string _const_method_type;
+	std::string _const_path_to_resource;
+	std::string _const_http_version;
+
 public:
 	Request(std::string &raw);
 	~Request();
