@@ -49,4 +49,5 @@ public:
 	const std::map<int, std::string> getErrorPages() const;
 	const std::vector<std::string>& getAllowedMethods() const;
 	const std::map<std::string, Location>& getLocations() const;
+	std::string getUploadDir();
 };

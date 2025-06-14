@@ -42,6 +42,10 @@ Request::Request(std::string &raw) {
 	}
 	_http_version = request_line_splited[2];
 
+	_const_http_version = _http_version;
+	_const_method_type = _method_type;
+	_const_path_to_resource = _path_to_resource;
+
 	// headers parsing (map)
 	size_t body_start_pos = 2;
 	for (size_t i = 1; lines[i].length() != 1; i++) {
@@ -67,7 +71,7 @@ Request::Request(std::string &raw) {
 }
 
 Response* Request::process(Server* server) {
-	std::string log = _method_type + " " + _path_to_resource + " " + _http_version;
+	std::string log = _const_method_type + " " + _const_path_to_resource + " " + _const_http_version;
 	std::cout << "\033[35m[TRACE] " << log << "\033[0m" << std::endl;
 	std::cout << "Body : " << std::endl << _body << std::endl;
 	Request *request_copy = new Request(*this); // qui gere le delete ici ?

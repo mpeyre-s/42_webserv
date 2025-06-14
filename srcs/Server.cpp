@@ -84,3 +84,7 @@ int Server::getClientMaxBodySize() const {
 const std::map<int, std::string> Server::getErrorPages() const {
 	return error_pages;
 }
+
+std::string Server::getUploadDir() { // <== il faut le faire mais je sais pas comment
+	return "website/media";
+}

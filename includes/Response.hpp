@@ -40,20 +40,24 @@ private:
 	std::string not_found_path;
 	std::string auto_index_path;
 	std::string request_entity_too_large_path;
+	std::string unsupported_media_path;
 
 	std::map<std::string, std::string> _file_types; // ext -> content type
 
 	// server params
 	std::string potential_server;
 	std::string path;
+	std::string _boundary;
 	bool		_correctPath;
 
-	void		setPath();
-	void		parseBody(std::string);
-	void		parseUrlEncodedBody(std::string); //TODO
-	void		parseJsonBody(std::string); //TODO
 	std::string	checkHeader();
 	void		parsePostHeader(std::istringstream& iss, std::string& line);
+	void		parseBodyBinary(std::istringstream& iss, std::string& line);
+	void		parseBodyText(std::istringstream& iss, std::string& line);
+	void		setPath();
+	void		parseBody(std::string);
+	std::string	getContentTypeFromPath(std::string &path);
+	std::string	checkExtension();
 
 public:
 	Response(Request *request ,Server* server, int status);
