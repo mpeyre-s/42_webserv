@@ -1,6 +1,34 @@
 #include "../includes/Response.hpp"
 #include "../includes/Request.hpp"
 
+static std::vector<std::string> generateListingDirectory(std::string &path) {
+	std::vector<std::string> result;
+	DIR *dir;
+	dir = opendir(path.c_str());
+	if (dir != nullptr) {
+		struct dirent *ent;
+		size_t i = -1;
+		while ((ent = readdir(dir)) != nullptr) {
+			if (++i > 1)
+				result.push_back(ent->d_name);
+		}
+	}
+	return result;
+}
+
+static std::string generateAutoIndexHtml(const std::string &path, const std::string &request_ressource) {
+	std::vector<std::string> ls = generateListingDirectory(const_cast<std::string&>(path));
+	std::string result;
+	result = "<html>\n<head>\n<title>Index Of " + request_ressource + "</title>\n</head>\n<body>\n<h1>Index Of " + request_ressource + "</h1>\n<ul>\n";
+	result.append("<li><a href=\"../\">Parent Directory</a></li>\n");
+	size_t nb_elements = ls.size();
+	for (size_t i = 0; i < nb_elements; i++) {
+		result.append("<li><a href=\"" + request_ressource + "/" + ls[i] + "\">" + ls[i] + "</a></li>\n");
+	}
+	result.append("</ul>\n</body>\n</html>");
+	return result;
+}
+
 static std::string getContentTypeFromPath(std::string &path) {
 	const char *extensions[] = {".html", ".css", ".js", ".json", ".xml", ".bin", ".exe", ".dll", ".jpg", ".jpeg", ".png", ".svg", ".gif", ".mp3", ".mp4", ".pdf", ".zip", ".txt", NULL};
 	for (size_t i = 0; extensions[i]; i++) {
@@ -148,7 +176,6 @@ Response::Response(Request *request, Server* server, int status) : _request(requ
 	bad_request_path = "resources/bad_request.html";
 	internal_server_error_path = "resources/internal_server_error.html";
 	not_found_path = "resources/not_found.html";
-	auto_index_path = "resources/auto_index.html";
 	request_entity_too_large_path = "resources/request_entity_too_large.html";
 
 	// default params
@@ -281,9 +308,9 @@ void	Response::get()
 	}
 	else
 	{
-		_headers["Content-Type"] = getContentTypeFromPath(auto_index_path);
-		_headers["Content-Length"] = intToStdString(getFileOctetsSize(auto_index_path));
-		_body = pathfileToStringBackslashs(auto_index_path);
+		_body = generateAutoIndexHtml(path, _request->getPathToResource());
+		_headers["Content-Type"] = "text/html";
+		_headers["Content-Length"] = intToStdString(_body.length());
 		return;
 	}
 }
