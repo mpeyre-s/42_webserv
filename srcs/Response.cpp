@@ -145,6 +145,7 @@ Response::Response(Request *request, Server* server, int status) : _request(requ
 	internal_server_error_path = "resources/internal_server_error.html";
 	not_found_path = "resources/not_found.html";
 	request_entity_too_large_path = "resources/request_entity_too_large.html";
+	unsuported_media_path = "resources/unsuported_media_path.html";
 
 	// default params
 	_http_version = "HTTP/1.1";
@@ -195,6 +196,8 @@ Response::Response(Request *request, Server* server, int status) : _request(requ
 		internal_server_error_path = cur_location.error_pages[500];
 	if (cur_location.error_pages.find(404) != cur_location.error_pages.end())
 		not_found_path = cur_location.error_pages[404];
+	if (cur_location.error_pages.find(415) != cur_location.error_pages.end())
+		not_found_path = cur_location.error_pages[415];
 
 	//check if status is bad request
 	if (_status != 200)
@@ -232,6 +235,14 @@ void	Response::badRequest()
 		_body = pathfileToStringBackslashs(bad_request_path);
 		return;
 	}
+	else if (_status == 415) {
+		_status = 413;
+		_text_status = "Unsupported Media Type";
+		_headers["Content-Type"] = "text/html";
+		_headers["Content-Length"] = intToStdString(getFileOctetsSize(unsuported_media_path));
+		_body = pathfileToStringBackslashs(unsuported_media_path);
+		return;
+	}
 	else if ((int)_request->getBody().size() > cur_location.client_max_body_size) {
 		_status = 413;
 		_text_status = "Request Entity Too Large";
@@ -260,6 +271,15 @@ void	Response::setPath()
 		path.append(cur_location.index);
 	else if (_request->getPathToResource() == potential_server)
 		path.append("/");
+
+	// compose path with filename for delete method
+	if (_request->getMethodType() == "DELETE") {
+		size_t i = path.find("?");
+		if (i != std::string::npos) {
+			path = path.substr(0, i);
+			path.append("/" + _request->getPathToResource().substr(_request->getPathToResource().find("=") + 1));
+		}
+	}
 
 	//check if path is correct
 	if (isPathOpenable(path) == false)
@@ -380,11 +400,11 @@ void		Response::parseBodyBinary(std::istringstream &iss, std::string &line)
 		return;
 	}
 
-	char	buffer[BUFFER_SIZE];
+	char	buffer[BUFFER_SIZES];
 	std::string chunk_left;
 	while (!iss.eof())
 	{
-		iss.read(buffer, BUFFER_SIZE);
+		iss.read(buffer, BUFFER_SIZES);
 		std::streamsize bytesRead = iss.gcount();
 		std::string chunk = chunk_left + std::string(buffer, bytesRead);
 
@@ -470,7 +490,7 @@ void	Response::post()
 	parseBody(_request->getBody());
 
 	std::cout << "le statut est : " << _status << std::endl;
-	if (_status != 200)
+	if (_status == 200)
 	{
 		_status = 201;
 		_text_status = "Created";
@@ -480,11 +500,21 @@ void	Response::post()
 	}
 }
 
+// ================================ DELETE LOGIC =================================
+
 void	Response::Delete() {
-	_headers["Content-Type"] = "text/brut";
-	_headers["Content-Length"] = "4";
-	_body = "OK\r\n";
-	return;
+	setPath();
+	if (!_correctPath)
+		return ;
+
+	if (pathIsFile(path)) {
+		remove(path.c_str());
+		return;
+	}
+	else {
+		// folder
+		return;
+	}
 }
 
 void	Response::process() {
@@ -501,6 +531,10 @@ void	Response::process() {
 std::string Response::getStringResponse() {
 	// build string -> buffer_out
 	process();
+
+	// log
+	std::cout << "  ↳ " << _status << " (" << _text_status << ")" << std::endl;
+
 	std::string result;
 	//std::cout << "status = " << _status << std::endl << "text status = " << _text_status << std::endl << "body = " << _body << std::endl;
 	result.append(_http_version + " " + intToStdString(_status) + " " + _text_status + "\r\n");
@@ -513,15 +547,4 @@ std::string Response::getStringResponse() {
 }
 
 Response::~Response() {}
-
-// A incorporer
-// <html>
-// 	<head>
-// 		<title>415 Unsupported Media Type</title>
-// 	</head>
-// 	<body>
-// 		<h1>415 Unsupported Media Type</h1>
-// 		<p>The media type provided in the request is not supported by this server.</p>
-// 	</body>
-// </html>
 

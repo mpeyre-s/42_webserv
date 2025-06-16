@@ -12,10 +12,11 @@
 #include <unistd.h>
 #include <dirent.h>
 #include <cstring>
+#include <cstdio>
 
 #include "../includes/Server.hpp"
 
-static const size_t BUFFER_SIZE = 2048;
+static const size_t BUFFER_SIZES = 2048;
 
 class Request;
 
@@ -42,7 +43,7 @@ private:
 	std::string not_found_path;
 	std::string auto_index_path;
 	std::string request_entity_too_large_path;
-	std::string unsupported_media_path;
+	std::string unsuported_media_path;
 
 	std::map<std::string, std::string> _file_types; // ext -> content type
 

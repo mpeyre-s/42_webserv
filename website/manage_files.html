@@ -34,7 +34,7 @@
 		</section>
 		<section class="card">
 			<h2>Delete</h2>
-			<form action="/files" method="delete">
+			<form id="deleteForm">
 				<input type="text" name="filename" placeholder="Enter filename to delete" required>
 				<button type="submit">Delete</button>
 			</form>
@@ -152,4 +152,20 @@
 		color: #fff;
 	}
 </style>
+<script>
+	document.getElementById('deleteForm').addEventListener('submit', async function(e) {
+		e.preventDefault();
+		const filename = this.filename.value;
+		const res = await fetch('/files?filename=' + encodeURIComponent(filename), {
+			method: 'DELETE'
+		});
+		if (res.ok) {
+			alert("HTTP/1.1 200 OK");
+		} else {
+			document.open();
+			document.write(await res.text());
+			document.close();
+		}
+	});
+</script>
 </html>
