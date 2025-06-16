@@ -1,6 +1,6 @@
 #include "../includes/ConfigParsing.hpp"
 
-ConfigParsing::ConfigParsing(std::string &configFile) 
+ConfigParsing::ConfigParsing(std::string &configFile)
 {
 	std::ifstream cfFile(configFile.c_str());
 	if (!cfFile)
@@ -29,13 +29,6 @@ ConfigParsing::ConfigParsing(std::string &configFile)
 			inServerBlock = false;
 		}
 	}
-	// DEBUG AFFICHAGE SERVEURS PAR BLOC
-	// for(std::vector<std::vector<std::string> >::const_iterator it1 = _serverBlocks.begin(); it1 != _serverBlocks.end(); it1++)
-	// {
-	// 	std::cout << "------SERVER------" << std::endl;
-	// 	for (std::vector<std::string>::const_iterator it2 = it1->begin(); it2 != it1->end(); it2++)
-	// 		std::cout << *it2 << std::endl; 
-	// }
 }
 
 ConfigParsing::~ConfigParsing() {}
@@ -195,11 +188,11 @@ void ConfigParsing::parseServerBlock(std::vector<std::vector<std::string> >	toke
 			server->setLocation(path, loc);
 		}
 		if (line[0] == "server_name")
-			if (line.size() > 1 && !line[1].empty()) 
+			if (line.size() > 1 && !line[1].empty())
 				server->setServerName(line[1]);
 		if (line[0] == "listen")
 		{
-			if (line.size() > 1 && !line[1].empty()) 
+			if (line.size() > 1 && !line[1].empty())
 				server->setHost(line[1]);
 			if (line.size() > 2 && !line[2].empty())
 			{
@@ -210,10 +203,10 @@ void ConfigParsing::parseServerBlock(std::vector<std::vector<std::string> >	toke
 			}
 		}
 		if (line[0] == "root")
-			if (line.size() > 1 && !line[1].empty()) 
+			if (line.size() > 1 && !line[1].empty())
 				server->setRoot(line[1]);
 		if (line[0] == "index")
-			if (line.size() > 1 && !line[1].empty()) 
+			if (line.size() > 1 && !line[1].empty())
 				server->setIndex(line[1]);
 		if (line[0] == "error_page")
 		{
@@ -241,7 +234,7 @@ void ConfigParsing::parseServerBlock(std::vector<std::vector<std::string> >	toke
 			for (size_t j = 0; j < line.size(); j++)
 				if ((line[j] == "GET" || line[j] == "POST" || line[j] == "DELETE"))
 					server->addAllowedMethod(line[j]);
-					
+
 		}
 	}
 }
@@ -269,11 +262,11 @@ void ConfigParsing::tokenizeServerBlock(const std::vector<std::string>& block, S
 	// 	std::cout << "------Tokenisation ligne " << i << " ------" << std::endl;
 	// 	for (std::vector<std::string>::const_iterator it2 = it1->begin(); it2 != it1->end(); it2++)
 	// 		std::cout << "[" << *it2 << "]" << " ";
-	// 	std::cout << std::endl; 
+	// 	std::cout << std::endl;
 	// }
 	parseServerBlock(tokenizedBlock, server);
 	tokenizedBlock.clear();
-	std::cout << std::endl; 
+	std::cout << std::endl;
 }
 
 void printServerTest(Server *server)
@@ -341,23 +334,23 @@ bool ConfigParsing::checkConformity(Server* server)
 
 }
 
-bool ConfigParsing::isValidIp(std::string ip)
-{
-	int isPoint;
-	int pos;
-	std::string valueStr
-	int value;
+// bool ConfigParsing::isValidIp(std::string ip)
+// {
+// 	int isPoint;
+// 	int pos;
+// 	std::string valueStr;
+// 	int value;
 
-	for (size_t i = 0; i < ip.length(); i++)
-	{
-		if (ip[i] == '.')
-		{
-			pos = i;
-			valueStr = ip.substr(0, pos);
+// 	for (size_t i = 0; i < ip.length(); i++)
+// 	{
+// 		if (ip[i] == '.')
+// 		{
+// 			pos = i;
+// 			valueStr = ip.substr(0, pos);
 
-		}
-	}
-}
+// 		}
+// 	}
+// }
 std::vector<Server*> ConfigParsing::createServerList() {
 	std::cout << "\033[32m[INFO] Configuration file parsed succesfuly\033[0m" << std::endl;
 	for (size_t i = 0; i < _serverBlocks.size(); i++)

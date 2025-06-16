@@ -27,15 +27,15 @@ public:
 
 class Server {
 private:
-	std::string server_name;  //ok
-	std::string host; //ok voir erreurs
-	int port; //ok voir erreurs
-	std::string root; //ok
-	std::string index; //ok
+	std::string server_name;
+	std::string host;
+	int port;
+	std::string root;
+	std::string index;
 	std::vector<std::string> allowed_methods;
-	int client_max_body_size; // ok
-	std::map<int, std::string> error_pages; //ok
-	std::map<std::string, Location> locations; //ok
+	int client_max_body_size;
+	std::map<int, std::string> error_pages;
+	std::map<std::string, Location> locations;
 
 public:
 	Server();
@@ -48,6 +48,8 @@ public:
 	std::string getIndex() const;
 	const std::vector<std::string>& getAllowedMethods() const;
 	const std::map<std::string, Location>& getLocations() const;
+	int getMaxBodySize() const;
+	std::map<int, std::string> getErrorPages() const;
 
 	void setServerName(const std::string& server);
 	void setHost(std::string& hostname);
