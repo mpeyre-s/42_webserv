@@ -146,6 +146,7 @@ Response::Response(Request *request, Server* server, int status) : _request(requ
 	not_found_path = "resources/not_found.html";
 	request_entity_too_large_path = "resources/request_entity_too_large.html";
 	unsuported_media_path = "resources/unsuported_media_path.html";
+	forbidden_path = "resources/forbidden_path.html";
 
 	// default params
 	_http_version = "HTTP/1.1";
@@ -197,7 +198,9 @@ Response::Response(Request *request, Server* server, int status) : _request(requ
 	if (cur_location.error_pages.find(404) != cur_location.error_pages.end())
 		not_found_path = cur_location.error_pages[404];
 	if (cur_location.error_pages.find(415) != cur_location.error_pages.end())
-		not_found_path = cur_location.error_pages[415];
+		unsuported_media_path = cur_location.error_pages[415];
+	if (cur_location.error_pages.find(403) != cur_location.error_pages.end())
+		forbidden_path = cur_location.error_pages[403];
 
 	//check if status is bad request
 	if (_status != 200)
@@ -508,11 +511,23 @@ void	Response::Delete() {
 		return ;
 
 	if (pathIsFile(path)) {
-		remove(path.c_str());
+		if (remove(path.c_str()) != 0) {
+			_status = 403;
+			_text_status = "Forbidden";
+			_headers["Content-Type"] = "text/html";
+			_headers["Content-Length"] = intToStdString(getFileOctetsSize(forbidden_path));
+			_body = pathfileToStringBackslashs(forbidden_path);
+		}
 		return;
 	}
 	else {
-		// folder
+		if (rmdir(path.c_str()) != 0) {
+			_status = 403;
+			_text_status = "Forbidden";
+			_headers["Content-Type"] = "text/html";
+			_headers["Content-Length"] = intToStdString(getFileOctetsSize(forbidden_path));
+			_body = pathfileToStringBackslashs(forbidden_path);
+		}
 		return;
 	}
 }
