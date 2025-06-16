@@ -159,13 +159,9 @@
 		const res = await fetch('/files?filename=' + encodeURIComponent(filename), {
 			method: 'DELETE'
 		});
-		if (res.ok) {
-			alert("HTTP/1.1 200 OK");
-		} else {
-			document.open();
-			document.write(await res.text());
-			document.close();
-		}
+		document.open();
+		document.write(await res.text());
+		document.close();
 	});
 </script>
 </html>

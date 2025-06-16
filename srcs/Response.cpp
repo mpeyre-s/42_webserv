@@ -146,7 +146,7 @@ Response::Response(Request *request, Server* server, int status) : _request(requ
 	not_found_path = "resources/not_found.html";
 	request_entity_too_large_path = "resources/request_entity_too_large.html";
 	unsuported_media_path = "resources/unsuported_media_path.html";
-	forbidden_path = "resources/forbidden_path.html";
+	forbidden_path = "resources/forbidden.html";
 
 	// default params
 	_http_version = "HTTP/1.1";
@@ -498,8 +498,8 @@ void	Response::post()
 		_status = 201;
 		_text_status = "Created";
 		_headers["Content-Type"] = "text/plain";
-		_headers["Content-Length"] = intToStdString(_body.length());
 		_body = "Upload successful.\n";
+		_headers["Content-Length"] = intToStdString(_body.length());
 	}
 }
 
@@ -510,25 +510,29 @@ void	Response::Delete() {
 	if (!_correctPath)
 		return ;
 
-	if (pathIsFile(path)) {
-		if (remove(path.c_str()) != 0) {
-			_status = 403;
-			_text_status = "Forbidden";
-			_headers["Content-Type"] = "text/html";
-			_headers["Content-Length"] = intToStdString(getFileOctetsSize(forbidden_path));
-			_body = pathfileToStringBackslashs(forbidden_path);
-		}
+	if (remove(path.c_str()) == 0) {
+		_headers["Content-Type"] = "text/plain";
+		_body = "Delete successful.\n";
+		_headers["Content-Length"] = intToStdString(_body.length());
 		return;
 	}
+
+	if (path[path.length() - 1] != '/')
+		path.append("/");
+
+	std::cout << "PATH: " << path << std::endl;
+
+	if (rmdir(path.c_str()) == 0) {
+		_headers["Content-Type"] = "text/plain";
+		_body = "Delete successful.\n";
+		_headers["Content-Length"] = intToStdString(_body.length());
+	}
 	else {
-		if (rmdir(path.c_str()) != 0) {
-			_status = 403;
-			_text_status = "Forbidden";
-			_headers["Content-Type"] = "text/html";
-			_headers["Content-Length"] = intToStdString(getFileOctetsSize(forbidden_path));
-			_body = pathfileToStringBackslashs(forbidden_path);
-		}
-		return;
+		_status = 403;
+		_text_status = "Forbidden";
+		_headers["Content-Type"] = "text/html";
+		_headers["Content-Length"] = intToStdString(getFileOctetsSize(forbidden_path));
+		_body = pathfileToStringBackslashs(forbidden_path);
 	}
 }
 
