@@ -337,7 +337,6 @@ std::string	Response::checkHeader()
 
 void Response::parsePostHeader(std::istringstream &iss, std::string &line)
 {
-	std::cout << "===== headers détecté ======" << std::endl;
 	while (std::getline(iss, line) && line != "\r" && !line.empty()) // faut peut etre check si il y a 0 header
 	{
 		if (line.find("Content-Disposition:") != std::string::npos)
@@ -370,23 +369,55 @@ std::string	Response::checkExtension()
 
 void		Response::parseBodyBinary(std::istringstream &iss, std::string &line)
 {
-	(void)iss;
 	(void)line;
+	std::string file_path = _server->getUploadDir() + "/" + _filename; // ça serait plus secure de faire une verification pour le "/"
+	std::cout << "Le path ou sera televerser le fichier est : " << file_path << std::endl;
+	std::ofstream outfile(file_path.c_str(), std::ios::binary);
+	if (!outfile.is_open()) {
+		_status = 500;
+		badRequest();
+		std::cerr << "Error writing file" << std::endl;
+		return;
+	}
+
+	char	buffer[BUFFER_SIZE];
+	std::string chunk_left;
+	while (!iss.eof())
+	{
+		iss.read(buffer, BUFFER_SIZE);
+		std::streamsize bytesRead = iss.gcount();
+		std::string chunk = chunk_left + std::string(buffer, bytesRead);
+
+		size_t pos = chunk.find(_boundary);
+		if (pos != std::string::npos)
+		{
+			outfile.write(chunk.c_str(), pos);
+			break ;
+		}
+		else
+		{
+			size_t keep = _boundary.size();
+			if (chunk.size() < keep)
+				keep = chunk.size();
+			size_t write_len = chunk.size() - keep;
+			outfile.write(chunk.c_str(), write_len);
+			chunk_left = chunk.substr(chunk.size() - keep);
+		}
+	}
+	outfile.close();
 }
 
 void		Response::parseBodyText(std::istringstream &iss, std::string &line)
 {
-	std::string file_path = _server->getUploadDir() + "/" + _filename;
+	std::string file_path = _server->getUploadDir() + "/" + _filename; // ça serait plus secure de faire une verification pour le "/"
 	std::cout << "Le path ou sera televerser le fichier est : " << file_path << std::endl;
 	std::ofstream outfile(file_path.c_str());
 	if (!outfile.is_open()) {
 		_status = 500;
 		badRequest();
-		std::cerr << "Error writing file" << std::endl; // il faut mieux le gerer
-		return;
+		std::cerr << "Error writing file" << std::endl;
+		return ;
 	}
-
-	//std::getline(iss, line); // sauter la ligne entre header et body apparement pas besoin
 
 	while (std::getline(iss, line))
 	{
@@ -394,10 +425,9 @@ void		Response::parseBodyText(std::istringstream &iss, std::string &line)
 			break;
 		if (!line.empty() && line[line.size() - 1] == '\r')
 			line.erase(line.size() - 1);
-		std::cout << "Ligne prise du body : " << line << std::endl;
 		outfile << line << "\n";
 	}
-	std::cout << "You see me?" << std::endl;
+	outfile.close();
 }
 
 void	Response::parseBody(std::string body)
@@ -427,11 +457,9 @@ void	Response::parseBody(std::string body)
 				parseBodyText(iss, line);
 		}
 		if (line == _boundary + "--") {
-			std::cout << "finish" << std::endl;
 			break ;
 		}
 	}
-	std::cout << "out of parse body" << std::endl;
 }
 
 void	Response::post()
@@ -442,11 +470,14 @@ void	Response::post()
 	parseBody(_request->getBody());
 
 	std::cout << "le statut est : " << _status << std::endl;
-	_status = 201;
-	_text_status = "Created";
-	_body = "Upload successful.\n";
-	_headers["Content-Type"] = "text/plain";
-	_headers["Content-Length"] = intToStdString(_body.length());
+	if (_status != 200)
+	{
+		_status = 201;
+		_text_status = "Created";
+		_headers["Content-Type"] = "text/plain";
+		_headers["Content-Length"] = intToStdString(_body.length());
+		_body = "Upload successful.\n";
+	}
 }
 
 void	Response::Delete() {
@@ -483,7 +514,7 @@ std::string Response::getStringResponse() {
 
 Response::~Response() {}
 
-
+// A incorporer
 // <html>
 // 	<head>
 // 		<title>415 Unsupported Media Type</title>
