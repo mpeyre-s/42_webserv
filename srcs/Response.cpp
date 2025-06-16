@@ -337,7 +337,7 @@ std::string	Response::checkHeader()
 
 void Response::parsePostHeader(std::istringstream &iss, std::string &line)
 {
-	while (std::getline(iss, line) && line != "\r" && !line.empty()) // faut peut etre check si il y a 0 header
+	while (std::getline(iss, line) && line != "\r" && !line.empty()) // faut peut etre check si il y a 0 header (normalement il y a toujours)
 	{
 		if (line.find("Content-Disposition:") != std::string::npos)
 		{
@@ -367,10 +367,9 @@ std::string	Response::checkExtension()
 	return NULL;
 }
 
-void		Response::parseBodyBinary(std::istringstream &iss, std::string &line)
+void		Response::parseBodyBinary(std::vector<char> vec, size_t len)
 {
-	(void)line;
-	std::string file_path = _server->getUploadDir() + "/" + _filename; // ça serait plus secure de faire une verification pour le "/"
+	std::string file_path = _server->getUploadDir() + "/" + _filename; // ça serait plus secure de faire une verification pour le "/" + file path already exist
 	std::cout << "Le path ou sera televerser le fichier est : " << file_path << std::endl;
 	std::ofstream outfile(file_path.c_str(), std::ios::binary);
 	if (!outfile.is_open()) {
@@ -379,36 +378,32 @@ void		Response::parseBodyBinary(std::istringstream &iss, std::string &line)
 		std::cerr << "Error writing file" << std::endl;
 		return;
 	}
-
-	char	buffer[BUFFER_SIZES];
-	std::string chunk_left;
-	while (!iss.eof())
+	size_t start = 1;
+	int count = 0;
+	while (start < len - 4)
 	{
-		iss.read(buffer, BUFFER_SIZES);
-		std::streamsize bytesRead = iss.gcount();
-		std::string chunk = chunk_left + std::string(buffer, bytesRead);
+		if (vec[start] == '\r' && vec[start + 1] == '\n' && vec[start + 2] == '\r' && vec[start + 3] == '\n')
+			count++;
+		if (count == 2)
+			break;
+		write(1, &vec[start], 1);
+		start++;
+	}
+	start += 4;
 
-		size_t pos = chunk.find(_boundary);
-		if (pos != std::string::npos)
-		{
-			outfile.write(chunk.c_str(), pos);
+	size_t i = start;
+	while (i < len)
+	{
+		if (vec[i] == '\r' && vec[i + 1] == '\n' && vec[i + 2] == '-' && vec[i + 3] == '-' && vec[i + 4] == '-' && vec[i + 5] == '-')
 			break ;
-		}
 		else
 		{
-			size_t keep = _boundary.size();
-			if (chunk.size() < keep)
-				keep = chunk.size();
-			size_t write_len = chunk.size() - keep;
-			outfile.write(chunk.c_str(), write_len);
-			chunk_left = chunk.substr(chunk.size() - keep);
+			outfile.write(&vec[i], 1);
 		}
+		i++;
 	}
-
+	outfile.close();
 }
-
-
-
 
 
 void		Response::parseBodyText(std::istringstream &iss, std::string &line)
@@ -431,7 +426,7 @@ void		Response::parseBodyText(std::istringstream &iss, std::string &line)
 			line.erase(line.size() - 1);
 		outfile << line << "\n";
 	}
-	//outfile.close();
+	outfile.close();
 }
 
 void	Response::parseBody(std::string body)
@@ -456,7 +451,7 @@ void	Response::parseBody(std::string body)
 				return ;
 			}
 			if (isPathFileBinary(extension))
-				parseBodyBinary(iss, line);
+				parseBodyBinary(_request->getVecChar(), _request->getBufferLen());
 			else
 				parseBodyText(iss, line);
 		}
@@ -473,14 +468,13 @@ void	Response::post()
 		return ;
 	parseBody(_request->getBody());
 
-	std::cout << "le statut est : " << _status << std::endl;
 	if (_status == 200)
 	{
 		_status = 201;
 		_text_status = "Created";
 		_headers["Content-Type"] = "text/plain";
-		_headers["Content-Length"] = intToStdString(_body.length());
 		_body = "Upload successful.\n";
+		_headers["Content-Length"] = intToStdString(_body.length());
 	}
 }
 
@@ -517,15 +511,3 @@ std::string Response::getStringResponse() {
 }
 
 Response::~Response() {}
-
-// A incorporer
-// <html>
-// 	<head>
-// 		<title>415 Unsupported Media Type</title>
-// 	</head>
-// 	<body>
-// 		<h1>415 Unsupported Media Type</h1>
-// 		<p>The media type provided in the request is not supported by this server.</p>
-// 	</body>
-// </html>
-

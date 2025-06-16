@@ -19,13 +19,15 @@ private:
 	std::string _http_version;
 	std::map<std::string, std::string> _headers;
 	std::string _body;
+	std::vector<char> _vec_char;
+	size_t	_bufferLen;
 
 	std::string _const_method_type;
 	std::string _const_path_to_resource;
 	std::string _const_http_version;
 
 public:
-	Request(std::string &raw);
+	Request(std::string &raw, std::vector<char>, size_t);
 	~Request();
 
 	Request &operator=(const Request &other);
@@ -37,6 +39,8 @@ public:
 	std::map<std::string, std::string> getHeaders() const;
 	std::string getBody() const;
 	std::string	getContentType();
+	std::vector<char> getVecChar();
+	size_t getBufferLen();
 
 	void setPathToResource(std::string &new_path);
 

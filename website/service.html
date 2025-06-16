@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>CGI Services</title>
+</head>
+<body>
+	<header>
+		<img src="files/webserv.svg" alt="Webserv Logo">
+		<p>Common Gateway Interface (CGI) Demo</p>
+	</header>
+
+	<nav>
+		<a href="/">Home</a>
+		<a href="/manage_files.html">Manage files</a>
+		<a href="/files">Library</a>
+		<a href="/service.html">CGI</a>
+		<a href="/private">Private</a>
+	</nav>
+
+	<main>
+		<section>
+			<h1>CGI Interface</h1>
+			<p>Test GET and POST requests to the CGI endpoint below.</p>
+		</section>
+
+		<section class="card">
+			<h2>CGI GET Request</h2>
+			<form action="/cgi" method="get">
+				<input type="text" name="name" placeholder="Enter a name">
+				<button type="submit">Send GET</button>
+			</form>
+		</section>
+
+		<section class="card">
+			<h2>CGI POST Request</h2>
+			<form action="/cgi" method="post">
+				<input type="text" name="message" placeholder="Enter a message">
+				<button type="submit">Send POST</button>
+			</form>
+		</section>
+	</main>
+
+	<footer>
+		<p>&copy; 2025 WebServ - By Hadrien Duflos (hduflos), Arnaud Fontan (afontan) & Mathis Peyre Schortzen (mpeyre-s) - No rights reserved</p>
+	</footer>
+
+	<style>
+
+		body {
+			font-family: Arial, sans-serif;
+			line-height: 1.6;
+			margin: 0;
+			padding: 0;
+			color: #333;
+		}
+
+		header {
+			background-color: #4a89dc;
+			color: white;
+			text-align: center;
+			padding: 2rem 0;
+		}
+
+		nav {
+			background-color: #333;
+			color: white;
+			padding: 1rem;
+			text-align: center;
+		}
+
+		nav a {
+			color: white;
+			margin: 0 1rem;
+			text-decoration: none;
+			position: relative;
+		}
+
+		nav a:hover::after {
+			width: 100%;
+		}
+
+		main {
+			max-width: 800px;
+			margin: 2rem auto;
+			padding: 0 1rem;
+		}
+
+		footer {
+			background-color: #333;
+			color: white;
+			text-align: center;
+			padding: 1rem;
+			position: fixed;
+			bottom: 0;
+			width: 100%;
+		}
+
+		.card {
+			background-color: #4a89dc;
+			color: white;
+			border-radius: 10px;
+			box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+			padding: 1rem;
+			margin: 1rem 0;
+		}
+
+		.card form {
+			display: flex;
+			flex-direction: column;
+			gap: 1rem;
+		}
+
+		.card input {
+			padding: 0.5rem;
+			border: none;
+			border-radius: 5px;
+		}
+
+		.card button {
+			background-color: #fff;
+			color: #4a89dc;
+			border: none;
+			border-radius: 5px;
+			padding: 0.5rem 1rem;
+			cursor: pointer;
+			font-weight: bold;
+			transition: background 0.2s, color 0.2s;
+		}
+
+		.card button:hover {
+			background-color: #357ab8;
+			color: #fff;
+		}
+	</style>
+</body>
+</html>

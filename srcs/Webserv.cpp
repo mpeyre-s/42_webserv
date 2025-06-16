@@ -118,10 +118,9 @@ void	Webserv::handleClientReading(int fd)
 		client->appendToBuffer(buf, bytes);
 		if (client->getState() == DONE_READING)
 		{
-			// Il faut me donner keep alive ici
-			Request *request = new Request(client->getBufferIn());
+			Request *request = new Request(client->getBufferIn(), client->getVecChar(), client->getBufferLen());
 			Response* response = request->process(client->getServer());
-			client->setBufferOut(response->getStringResponse());
+			client->setBufferOut(response->getStringResponse()); // ce n'est pas l'upload qu'on renvoie, c'est la rep ok
 			client->setKeepAlive(request->isKeepAlive());
 
 			//std::cout << "===== BUFFER OUT =====" << std::endl << response->getStringResponse() << std::endl;

@@ -13,6 +13,8 @@
 #include <dirent.h>
 #include <cstring>
 
+#include <iomanip> // pour std::hex et std::setw
+
 #include "../includes/Server.hpp"
 
 static const size_t BUFFER_SIZES = 2048;
@@ -54,7 +56,7 @@ private:
 
 	std::string	checkHeader();
 	void		parsePostHeader(std::istringstream& iss, std::string& line);
-	void		parseBodyBinary(std::istringstream& iss, std::string& line);
+	void		parseBodyBinary(std::vector<char>, size_t);
 	void		parseBodyText(std::istringstream& iss, std::string& line);
 	void		setPath();
 	void		parseBody(std::string);

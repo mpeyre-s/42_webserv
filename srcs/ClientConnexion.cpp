@@ -27,6 +27,13 @@ Server	*ClientConnexion::getServer() {
 	return _server;
 }
 
+std::vector<char> ClientConnexion::getVecChar() {
+	return _vec_char;
+}
+size_t	ClientConnexion::getBufferLen() {
+	return _bufferLen;
+}
+
 bool	ClientConnexion::getKeep_alive() {
 	return keep_alive;
 }
@@ -60,6 +67,7 @@ void	ClientConnexion::clearBuffer() {
 	bufferIn.clear();
 	bufferOut.clear();
 	_bodySize = 0;
+	_vec_char.clear();
 }
 
 void	ClientConnexion::UpdateActivity() {
@@ -74,8 +82,12 @@ bool	ClientConnexion::checkChunked(size_t body_start)
 	{
 		std::string buffer2 = buffer.substr(pos);
 		std::size_t pos = buffer2.find("\r\n\r\n");
-		if (pos != std::string::npos)
+		if (pos != std::string::npos) {
+			//_binaryBuffer = _vec_char.data();
+			_bufferLen = _vec_char.size();
+			//print(_vec_char);
 			return true ;
+		}
 	}
 	return false ;
 }
@@ -89,6 +101,8 @@ bool	ClientConnexion::checkContentLength(size_t pos, size_t body_start)
 
 	if (bufferIn.size() - body_start < (unsigned int)_bodySize)
 		return false ;
+	//print(_vec_char);
+	//_binaryBuffer = _vec_char.data();
 	return true ;
 }
 
@@ -96,8 +110,8 @@ bool	ClientConnexion::checkContentLength(size_t pos, size_t body_start)
 bool	ClientConnexion::isDoneReading()
 {
 	std::size_t body_start = bufferIn.find("\r\n\r\n");
-		if (body_start == std::string::npos)
-			return false ;
+	if (body_start == std::string::npos)
+		return false ;
 	body_start += 4;
 	if (bufferIn.size() >= 4 && bufferIn.substr(0, 4) == "GET ")
 		return true ;
@@ -131,10 +145,12 @@ void	ClientConnexion::removeFromBuffer(int bytesSent)
 
 void	ClientConnexion::appendToBuffer(char *buffer, int len)
 {
-	bufferIn.append(buffer, len);
+	bufferIn.append(buffer, len); // pour gerer les txt
+	_vec_char.insert(_vec_char.end(), buffer, buffer + len); // pour gerer les binaires
 	if (!isDoneReading())
 		_state = READING;
 	else
 		_state = DONE_READING;
 }
+
 
