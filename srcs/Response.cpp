@@ -520,8 +520,6 @@ void	Response::Delete() {
 	if (path[path.length() - 1] != '/')
 		path.append("/");
 
-	std::cout << "PATH: " << path << std::endl;
-
 	if (rmdir(path.c_str()) == 0) {
 		_headers["Content-Type"] = "text/plain";
 		_body = "Delete successful.\n";
