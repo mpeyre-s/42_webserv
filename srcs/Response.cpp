@@ -380,11 +380,11 @@ void		Response::parseBodyBinary(std::istringstream &iss, std::string &line)
 		return;
 	}
 
-	char	buffer[BUFFER_SIZE];
+	char	buffer[BUFFER_SIZES];
 	std::string chunk_left;
 	while (!iss.eof())
 	{
-		iss.read(buffer, BUFFER_SIZE);
+		iss.read(buffer, BUFFER_SIZES);
 		std::streamsize bytesRead = iss.gcount();
 		std::string chunk = chunk_left + std::string(buffer, bytesRead);
 
@@ -404,8 +404,12 @@ void		Response::parseBodyBinary(std::istringstream &iss, std::string &line)
 			chunk_left = chunk.substr(chunk.size() - keep);
 		}
 	}
-	outfile.close();
+
 }
+
+
+
+
 
 void		Response::parseBodyText(std::istringstream &iss, std::string &line)
 {
@@ -427,7 +431,7 @@ void		Response::parseBodyText(std::istringstream &iss, std::string &line)
 			line.erase(line.size() - 1);
 		outfile << line << "\n";
 	}
-	outfile.close();
+	//outfile.close();
 }
 
 void	Response::parseBody(std::string body)
@@ -470,7 +474,7 @@ void	Response::post()
 	parseBody(_request->getBody());
 
 	std::cout << "le statut est : " << _status << std::endl;
-	if (_status != 200)
+	if (_status == 200)
 	{
 		_status = 201;
 		_text_status = "Created";

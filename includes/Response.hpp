@@ -15,7 +15,7 @@
 
 #include "../includes/Server.hpp"
 
-static const size_t BUFFER_SIZE = 2048;
+static const size_t BUFFER_SIZES = 2048;
 
 class Request;
 
