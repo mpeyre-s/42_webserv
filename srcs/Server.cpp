@@ -41,8 +41,8 @@ Location::Location(std::vector<std::string> confFile) {
 			line_token[line_token.size() - 1] = line_token[line_token.size() - 1].substr(0, line_token[line_token.size() - 1].length() - 1);
 			if (!client_max_body_size) {
 				int nb = atoi(line_token[1].c_str());
-				if (nb <= MAX_BODY_SIZE)
-					client_max_body_size = nb;
+				if (nb <= MAX_BODY_SIZE && nb > 0)
+					client_max_body_size = nb * (1024 * 1024);
 				else
 					throw std::invalid_argument(confFile[i]);
 				continue;
@@ -214,8 +214,8 @@ Server::Server(std::vector<std::string> confFile) {
 			line_token[line_token.size() - 1] = line_token[line_token.size() - 1].substr(0, line_token[line_token.size() - 1].length() - 1);
 			if (!client_max_body_size) {
 				int nb = atoi(line_token[1].c_str());
-				if (nb <= MAX_BODY_SIZE)
-					client_max_body_size = nb;
+				if (nb <= MAX_BODY_SIZE && nb > 0)
+					client_max_body_size = nb * (1024 * 1024);
 				else
 					throw std::invalid_argument(confFile[i]);
 				continue;
