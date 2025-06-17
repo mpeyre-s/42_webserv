@@ -145,6 +145,8 @@ Response::Response(Request *request, Server* server, int status) : _request(requ
 	internal_server_error_path = "resources/internal_server_error.html";
 	not_found_path = "resources/not_found.html";
 	request_entity_too_large_path = "resources/request_entity_too_large.html";
+	unsuported_media_path = "resources/unsuported_media_path.html";
+	forbidden_path = "resources/forbidden.html";
 
 	// default params
 	_http_version = "HTTP/1.1";
@@ -196,6 +198,10 @@ Response::Response(Request *request, Server* server, int status) : _request(requ
 		internal_server_error_path = cur_location.error_pages[500];
 	if (cur_location.error_pages.find(404) != cur_location.error_pages.end())
 		not_found_path = cur_location.error_pages[404];
+	if (cur_location.error_pages.find(415) != cur_location.error_pages.end())
+		unsuported_media_path = cur_location.error_pages[415];
+	if (cur_location.error_pages.find(403) != cur_location.error_pages.end())
+		forbidden_path = cur_location.error_pages[403];
 
 	std::cout << "The location is : " << cur_location.path << std::endl;
 	//check if status is bad request
@@ -234,6 +240,14 @@ void	Response::badRequest()
 		_body = pathfileToStringBackslashs(bad_request_path);
 		return;
 	}
+	else if (_status == 415) {
+		_status = 413;
+		_text_status = "Unsupported Media Type";
+		_headers["Content-Type"] = "text/html";
+		_headers["Content-Length"] = intToStdString(getFileOctetsSize(unsuported_media_path));
+		_body = pathfileToStringBackslashs(unsuported_media_path);
+		return;
+	}
 	else if ((int)_request->getBody().size() > cur_location.client_max_body_size) {
 		_status = 413;
 		_text_status = "Request Entity Too Large";
@@ -266,6 +280,15 @@ void	Response::setPath()
 		path.append(cur_location.index);
 	else if (_request->getPathToResource() == potential_server)
 		path.append("/");
+
+	// compose path with filename for delete method
+	if (_request->getMethodType() == "DELETE") {
+		size_t i = path.find("?");
+		if (i != std::string::npos) {
+			path = path.substr(0, i);
+			path.append("/" + _request->getPathToResource().substr(_request->getPathToResource().find("=") + 1));
+		}
+	}
 
 	//check if path is correct
 	if (isPathOpenable(path) == false)
@@ -479,11 +502,35 @@ void	Response::post()
 	}
 }
 
+// ================================ DELETE LOGIC =================================
+
 void	Response::Delete() {
-	_headers["Content-Type"] = "text/brut";
-	_headers["Content-Length"] = "4";
-	_body = "OK\r\n";
-	return;
+	setPath();
+	if (!_correctPath)
+		return ;
+
+	if (remove(path.c_str()) == 0) {
+		_headers["Content-Type"] = "text/plain";
+		_body = "Delete successful.\n";
+		_headers["Content-Length"] = intToStdString(_body.length());
+		return;
+	}
+
+	if (path[path.length() - 1] != '/')
+		path.append("/");
+
+	if (rmdir(path.c_str()) == 0) {
+		_headers["Content-Type"] = "text/plain";
+		_body = "Delete successful.\n";
+		_headers["Content-Length"] = intToStdString(_body.length());
+	}
+	else {
+		_status = 403;
+		_text_status = "Forbidden";
+		_headers["Content-Type"] = "text/html";
+		_headers["Content-Length"] = intToStdString(getFileOctetsSize(forbidden_path));
+		_body = pathfileToStringBackslashs(forbidden_path);
+	}
 }
 
 void	Response::process()
@@ -503,6 +550,10 @@ void	Response::process()
 std::string Response::getStringResponse() {
 	// build string -> buffer_out
 	process();
+
+	// log
+	std::cout << "  ↳ " << _status << " (" << _text_status << ")" << std::endl;
+
 	std::string result;
 	//std::cout << "status = " << _status << std::endl << "text status = " << _text_status << std::endl << "body = " << _body << std::endl;
 	result.append(_http_version + " " + intToStdString(_status) + " " + _text_status + "\r\n");
