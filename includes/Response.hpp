@@ -24,7 +24,7 @@ class Request;
 class Response {
 private:
 	Request* _request;
-	Server* _server;
+	Server*	_server;
 	Location cur_location;
 
 
@@ -62,6 +62,9 @@ private:
 	void		parseBody(std::string);
 	std::string	getContentTypeFromPath(std::string &path);
 	std::string	checkExtension();
+	bool		isCGI();
+	void		cgiGet();
+	void		cgiPost();
 
 public:
 	Response(Request *request ,Server* server, int status);
@@ -73,4 +76,6 @@ public:
 	void	get();
 	void	post();
 	void	Delete();
+	void	cgi();
+
 };

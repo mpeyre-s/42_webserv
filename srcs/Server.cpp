@@ -41,7 +41,7 @@ Server::Server() {
 	Location cgi_loc;
 	cgi_loc.allowed_methods.push_back("GET");
 	cgi_loc.allowed_methods.push_back("POST");
-	cgi_loc.cgi_extensions.push_back(".php");
+	cgi_loc.cgi_extensions.push_back(".py");
 	cgi_loc.cgi_path = "website/api";
 	cgi_loc.auto_index = false;
 	locations["/cgi"] = cgi_loc;

@@ -186,6 +186,7 @@ Response::Response(Request *request, Server* server, int status) : _request(requ
 	if (cur_location.error_pages.size() == 0)
 		cur_location.error_pages = server->getErrorPages();
 
+
 	// replace error pages if needed
 	if (cur_location.error_pages.find(400) != cur_location.error_pages.end())
 		bad_request_path = cur_location.error_pages[400];
@@ -196,6 +197,7 @@ Response::Response(Request *request, Server* server, int status) : _request(requ
 	if (cur_location.error_pages.find(404) != cur_location.error_pages.end())
 		not_found_path = cur_location.error_pages[404];
 
+	std::cout << "The location is : " << cur_location.path << std::endl;
 	//check if status is bad request
 	if (_status != 200)
 		_badRequest = true;
@@ -255,7 +257,11 @@ void	Response::setPath()
 	_text_status = "OK";
 	_correctPath = true;
 
-	path = cur_location.root + _request->getPathToResource().substr(cur_location.path.length());
+	if (cur_location.cgi_path.empty() == false && cur_location.cgi_extensions.size() > 0)
+		path = cur_location.cgi_path +  _request->getPathToResource().substr(cur_location.path.length());
+	else
+		path = cur_location.root + _request->getPathToResource().substr(cur_location.path.length());
+
 	if (path[path.length() - 1] == '/' && cur_location.auto_index == false)
 		path.append(cur_location.index);
 	else if (_request->getPathToResource() == potential_server)
@@ -308,7 +314,6 @@ void	Response::get()
 std::string	Response::checkHeader()
 {
 	std::string ContentType = _request->getContentType();
-	std::cout << "Mon content type est ici : " << ContentType << std::endl;
 	size_t pos = ContentType.find("multipart/form-data");
 	if (pos == std::string::npos)
 	{
@@ -352,7 +357,6 @@ void Response::parsePostHeader(std::istringstream &iss, std::string &line)
 		{
 			size_t typeStart = line.find(":") + 2;
 			_contentType = line.substr(typeStart);
-			std::cout << "Content type = " << _contentType << std::endl;
 		}
 	}
 }
@@ -370,7 +374,6 @@ std::string	Response::checkExtension()
 void		Response::parseBodyBinary(std::vector<char> vec, size_t len)
 {
 	std::string file_path = _server->getUploadDir() + "/" + _filename; // ça serait plus secure de faire une verification pour le "/" + file path already exist
-	std::cout << "Le path ou sera televerser le fichier est : " << file_path << std::endl;
 	std::ofstream outfile(file_path.c_str(), std::ios::binary);
 	if (!outfile.is_open()) {
 		_status = 500;
@@ -397,9 +400,7 @@ void		Response::parseBodyBinary(std::vector<char> vec, size_t len)
 		if (vec[i] == '\r' && vec[i + 1] == '\n' && vec[i + 2] == '-' && vec[i + 3] == '-' && vec[i + 4] == '-' && vec[i + 5] == '-')
 			break ;
 		else
-		{
 			outfile.write(&vec[i], 1);
-		}
 		i++;
 	}
 	outfile.close();
@@ -408,8 +409,8 @@ void		Response::parseBodyBinary(std::vector<char> vec, size_t len)
 
 void		Response::parseBodyText(std::istringstream &iss, std::string &line)
 {
+	// Je pense que cette logique n'est pas bonne
 	std::string file_path = _server->getUploadDir() + "/" + _filename; // ça serait plus secure de faire une verification pour le "/"
-	std::cout << "Le path ou sera televerser le fichier est : " << file_path << std::endl;
 	std::ofstream outfile(file_path.c_str());
 	if (!outfile.is_open()) {
 		_status = 500;
@@ -485,9 +486,12 @@ void	Response::Delete() {
 	return;
 }
 
-void	Response::process() {
+void	Response::process()
+{
 	if (_badRequest)
 		badRequest();
+	if (isCGI())
+		cgi();
 	else if (_request->getMethodType() == "GET")
 		get();
 	else if (_request->getMethodType() == "POST")
@@ -511,3 +515,70 @@ std::string Response::getStringResponse() {
 }
 
 Response::~Response() {}
+
+
+bool	Response::isCGI()
+{
+	setPath();
+	// if (!_correctPath)
+	// 	std::cout << "PATH STRING = " << path << std::endl;
+
+
+	// Check Method available
+	std::string Method = _request->getMethodType();
+	std::vector<std::string>::iterator it = cur_location.allowed_methods.begin();
+
+	for (; it != cur_location.allowed_methods.end(); ++it)
+	{
+		if (*it == Method)
+			break ;
+	}
+	if (it == cur_location.allowed_methods.end())
+		return false ;
+
+	//Check extension available
+	std::string sub_path = path.substr(cur_location.cgi_path.size() + 1);
+	size_t first_slash = sub_path.find('/');
+	if (first_slash == std::string::npos)
+		first_slash = sub_path.size();
+
+	bool valid_extension = false;
+	for (std::vector<std::string>::iterator it = cur_location.cgi_extensions.begin(); it != cur_location.cgi_extensions.end(); ++it)
+	{
+		size_t ext_pos = sub_path.find(*it);
+		if (ext_pos != std::string::npos && ext_pos < first_slash)
+		{
+			valid_extension = true;
+			break;
+		}
+	}
+	if (!valid_extension)
+		return false;
+
+	return true;
+}
+
+void	Response::cgiGet()
+{
+	size_t pos = path.find("?name=");
+	if (pos == std::string::npos)
+		return ; // error
+	std::string name = path.substr(pos + 6);
+
+}
+
+
+void	Response::cgi()
+{
+	if (_request->getMethodType() == "GET")
+		cgiGet();
+	else if (_request->getMethodType() == "POST")
+		cgiPost();
+	else
+		return ;
+}
+
+
+
+
+void	Response::cgiPost() {return;}
