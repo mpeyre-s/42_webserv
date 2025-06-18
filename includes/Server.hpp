@@ -22,6 +22,7 @@ public:
 	std::string redirect_url;
 	std::map<int, std::string> error_pages;
 
+	Location();
 	Location(std::vector<std::string> locationBlock);
 	~Location();
 

@@ -166,35 +166,41 @@ Response::Response(Request *request, Server* server, int status) : _request(requ
 	}
 
 	// class instant with all config params for the current endpoint asked
-	cur_location = locations_nested[potential_server];
+	std::map<std::string, Location*>::iterator it = locations_nested.find(potential_server);
+	if (it != locations_nested.end() && it->second != NULL)
+		cur_location = it->second;
+	else
+		cur_location = new Location();
+
 	if (potential_server == "/" || potential_server.empty())
-		cur_location->getPath() = "/";
-	if (cur_location->path.empty())
-		cur_location->path = potential_server;
-	if (cur_location->allowed_methods.empty())
-		cur_location->allowed_methods = server->getAllowedMethods();
-	if (cur_location->root.empty())
-		cur_location->root = server->getRoot();
-	if (cur_location->index.empty())
-		cur_location->index = server->getIndex();
-	if (!cur_location->client_max_body_size)
-		cur_location->client_max_body_size = server->getMaxBodySize();
-	if (cur_location->error_pages.size() == 0)
-		cur_location->error_pages = server->getErrorPages();
+		cur_location->setPath("/");
+	if (cur_location->getPath().empty())
+		cur_location->setPath(potential_server);
+	if (cur_location->getAllowedMethods().empty())
+		cur_location->setAllowedMethods(server->getAllowedMethods());
+	if (cur_location->getRoot().empty())
+		cur_location->setRoot(server->getRoot());
+	if (cur_location->getIndex().empty())
+		cur_location->setIndex(server->getIndex());
+	if (!cur_location->getMaxBodySize())
+		cur_location->setClientMaxBodySize(server->getMaxBodySize());
+	if (cur_location->getErrorPages().size() == 0)
+		cur_location->setErrorPages(server->getErrorPages());
 
 	// replace error pages if needed
-	if (cur_location->error_pages.find(400) != cur_location->error_pages.end())
-		bad_request_path = cur_location->error_pages[400];
-	if (cur_location->error_pages.find(413) != cur_location->error_pages.end())
-		request_entity_too_large_path = cur_location->error_pages[413];
-	if (cur_location->error_pages.find(500) != cur_location->error_pages.end())
-		internal_server_error_path = cur_location->error_pages[500];
-	if (cur_location->error_pages.find(404) != cur_location->error_pages.end())
-		not_found_path = cur_location->error_pages[404];
-	if (cur_location->error_pages.find(415) != cur_location->error_pages.end())
-		unsuported_media_path = cur_location->error_pages[415];
-	if (cur_location->error_pages.find(403) != cur_location->error_pages.end())
-		forbidden_path = cur_location->error_pages[403];
+	std::map<int, std::string> current_error_pages = cur_location->getErrorPages();
+	if (cur_location->getErrorPages().find(400) != cur_location->getErrorPages().end())
+		bad_request_path = current_error_pages[400];
+	if (cur_location->getErrorPages().find(413) != cur_location->getErrorPages().end())
+		request_entity_too_large_path = current_error_pages[413];
+	if (cur_location->getErrorPages().find(500) != cur_location->getErrorPages().end())
+		internal_server_error_path = current_error_pages[500];
+	if (cur_location->getErrorPages().find(404) != cur_location->getErrorPages().end())
+		not_found_path = current_error_pages[404];
+	if (cur_location->getErrorPages().find(415) != cur_location->getErrorPages().end())
+		unsuported_media_path = current_error_pages[415];
+	if (cur_location->getErrorPages().find(403) != cur_location->getErrorPages().end())
+		forbidden_path = current_error_pages[403];
 
 	//check if status is bad request
 	if (_status != 200)
@@ -233,14 +239,13 @@ void	Response::badRequest()
 		return;
 	}
 	else if (_status == 415) {
-		_status = 413;
 		_text_status = "Unsupported Media Type";
 		_headers["Content-Type"] = "text/html";
 		_headers["Content-Length"] = intToStdString(getFileOctetsSize(unsuported_media_path));
 		_body = pathfileToStringBackslashs(unsuported_media_path);
 		return;
 	}
-	else if ((int)_request->getBody().size() > cur_location->client_max_body_size) {
+	else if (cur_location && (int)_request->getBody().size() > cur_location->getMaxBodySize()) {
 		_status = 413;
 		_text_status = "Request Entity Too Large";
 		_headers["Content-Type"] = "text/html";
@@ -263,9 +268,9 @@ void	Response::setPath()
 	_text_status = "OK";
 	_correctPath = true;
 
-	path = cur_location->root + _request->getPathToResource().substr(cur_location->path.length());
-	if (path[path.length() - 1] == '/' && cur_location->auto_index == false)
-		path.append(cur_location->index);
+	path = cur_location->getRoot() + _request->getPathToResource().substr(cur_location->getPath().length());
+	if (path[path.length() - 1] == '/' && cur_location->getAutoIndex() == false)
+		path.append(cur_location->getIndex());
 	else if (_request->getPathToResource() == potential_server)
 		path.append("/");
 
@@ -298,9 +303,9 @@ void	Response::get()
 	if (!_correctPath)
 		return;
 
-	if (cur_location->redirect_code != 0 && !cur_location->redirect_url.empty()) {
+	if (cur_location->getRedirectCode() != 0 && !cur_location->getRedirectUrl().empty()) {
 		_status = 301;
-		_headers["Location"] = cur_location->redirect_url;
+		_headers["Location"] = cur_location->getRedirectUrl();
 		return;
 	}
 

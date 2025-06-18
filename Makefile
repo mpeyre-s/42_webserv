@@ -8,7 +8,7 @@ OBJS = $(addprefix $(OBJDIR), $(SRCS:.cpp=.o))
 NAME = webserv
 
 # Compiler settings
-CXXFLAGS = -Wall -Wextra -Werror -std=c++98
+CXXFLAGS = -Wall -Wextra -Werror -std=c++98 -g
 CXX = c++
 RM = rm -f
 

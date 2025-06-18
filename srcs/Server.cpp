@@ -1,5 +1,7 @@
 #include "../includes/Server.hpp"
 
+Location::Location() {}
+
 Location::Location(std::vector<std::string> confFile) {
 	for (size_t i = 0; i < confFile.size(); i++) {
 		std::vector<std::string> line_token = split(confFile[i], " ");
@@ -280,8 +282,6 @@ Server::Server(std::vector<std::string> confFile) : _default(false) {
 			} else
 				throw std::invalid_argument(confFile[i]);
 		}
-
-
 	}
 
 	// if no location return to avoid parse location
@@ -330,6 +330,8 @@ Server::Server(std::vector<std::string> confFile) : _default(false) {
 
 Server::~Server() {}
 
+// =================== SERVER GETTERS =======================
+
 std::string Server::getServerName() const {
 	return server_name;
 }
@@ -373,6 +375,8 @@ std::map<int, std::string> Server::getErrorPages() {
 bool Server::getDefaultStatus() {
 	return _default;
 }
+
+// =================== SERVER SETTERS =======================
 
 void Server::setServerName(const std::string& server) {
 	server_name = server;
