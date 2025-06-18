@@ -1,7 +1,9 @@
 #include "../includes/Request.hpp"
 #include "../includes/Response.hpp"
 
-Request::Request(std::string &raw) {
+Request::Request(std::string &raw, std::vector<char> vec, size_t bufferLen) {
+	_vec_char = vec;
+	_bufferLen = bufferLen;
 	_parsing_error = 200;
 	std::vector<std::string> lines = split(raw, "\r\n");
 
@@ -84,6 +86,10 @@ std::string Request::getPathToResource() const {
 	return _path_to_resource;
 }
 
+std::vector<char> Request::getVecChar() {
+	return _vec_char;
+}
+
 std::map<std::string, std::string> Request::getHeaders() const {
 	return _headers;
 }
@@ -111,4 +117,8 @@ std::string	Request::getContentType()
 
 void	Request::setPathToResource(std::string &new_path) {
 	_path_to_resource = new_path;
+}
+
+size_t	Request::getBufferLen() {
+	return _bufferLen;
 }

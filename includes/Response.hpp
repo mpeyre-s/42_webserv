@@ -19,6 +19,9 @@
 
 static const size_t BUFFER_SIZES = 2048;
 
+#define ABSOLUTE_PATH "/Users/spike/42/WebServ/"
+#define PHP_PATH "/opt/homebrew/opt/php/bin/php-cgi"
+
 class Request;
 
 class Response {
@@ -46,6 +49,7 @@ private:
 	std::string request_entity_too_large_path;
 	std::string unsuported_media_path;
 	std::string forbidden_path;
+	std::string method_not_allowed;
 
 	std::map<std::string, std::string> _file_types; // ext -> content type
 
@@ -54,15 +58,25 @@ private:
 	std::string path;
 	std::string _boundary;
 	bool		_correctPath;
+	std::vector<std::string> _env;
+	bool		_isphp;
+	bool		_isCGI;
 
 	std::string	checkHeader();
 	void		parsePostHeader(std::istringstream& iss, std::string& line);
-	void		parseBodyBinary(std::istringstream& iss, std::string& line);
+	void		parseBodyBinary(std::vector<char>, size_t);
 	void		parseBodyText(std::istringstream& iss, std::string& line);
 	void		setPath();
 	void		parseBody(std::string);
 	std::string	getContentTypeFromPath(std::string &path);
 	std::string	checkExtension();
+	bool		isValidMethodExtension();
+	bool		isValidCgi();
+	void		create_env();
+	void		parseCgiBody(std::string cgi_body);
+	void		getCGI(std::string, std::vector<char *>);
+	void		postCGI(std::string, std::vector<char *>);
+
 
 public:
 	Response(Request *request ,Server* server, int status);
@@ -74,4 +88,6 @@ public:
 	void	get();
 	void	post();
 	void	Delete();
+	void	cgi();
+
 };

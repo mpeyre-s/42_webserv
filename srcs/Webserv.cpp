@@ -31,8 +31,14 @@ void Webserv::prepareSockets()
 		// Initialisation de sockaddr_in pour Bind
 		std::memset(&ep.addr, 0, sizeof(ep.addr));
 		ep.addr.sin_family = AF_INET;
-		ep.addr.sin_addr.s_addr = htonl(INADDR_ANY); // à vérifier -> dépend si le serveur à une IP
 		ep.addr.sin_port = htons(_list_servers[i]->getPort());
+		std::string host = _list_servers[i]->getHost();
+		if (host.empty() || host == "0.0.0.0")
+			ep.addr.sin_addr.s_addr = htonl(INADDR_ANY);
+		else {
+			if (inet_pton(AF_INET, host.c_str(), &ep.addr.sin_addr) <= 0)
+				throw std::runtime_error("Adresse IP invalide pour le host : " + host);
+		}
 
 		// Bind
 		if (bind(ep.fd, reinterpret_cast<sockaddr*>(&ep.addr), sizeof(ep.addr)) < 0)
@@ -96,6 +102,7 @@ void Webserv::handleNewConnexion(int server_fd)
 	_fds.push_back(client_poll);
 
 	// Création de l'instance de la class ClientConnexion pour gérer ce nouveau client
+	// il va falloir envoyer la liste de serveur car on va devoir gerer le bon serveur correspondant
 	ClientConnexion *client = new ClientConnexion(client_fd, _correspondingServ[server_fd], TO_READ);
 	_clients[client_fd] = client;
 }
@@ -118,10 +125,9 @@ void	Webserv::handleClientReading(int fd)
 		client->appendToBuffer(buf, bytes);
 		if (client->getState() == DONE_READING)
 		{
-			// Il faut me donner keep alive ici
-			Request *request = new Request(client->getBufferIn());
+			Request *request = new Request(client->getBufferIn(), client->getVecChar(), client->getBufferLen());
 			Response* response = request->process(client->getServer());
-			client->setBufferOut(response->getStringResponse());
+			client->setBufferOut(response->getStringResponse()); // ce n'est pas l'upload qu'on renvoie, c'est la rep ok
 			client->setKeepAlive(request->isKeepAlive());
 
 			//std::cout << "===== BUFFER OUT =====" << std::endl << response->getStringResponse() << std::endl;

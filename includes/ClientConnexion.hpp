@@ -28,6 +28,8 @@ class ClientConnexion
 		std::string	bufferIn;
 		std::string	bufferOut;
 		int			_bodySize;
+		std::vector<char> _vec_char;
+		size_t		_bufferLen;
 
 		time_t		_start;
 		bool		_timedOut;
@@ -54,6 +56,8 @@ class ClientConnexion
 		std::string	&getBufferOut();
 		bool		hasTimedOut();
 		bool		getKeep_alive();
+		std::vector<char> getVecChar();
+		size_t	getBufferLen();
 
 		void	setBufferOut(std::string buff);
 		void	setState(State);
