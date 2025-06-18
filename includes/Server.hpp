@@ -9,7 +9,6 @@
 
 class Location {
 public:
-<<<<<<< HEAD
 	std::string path;
 	std::vector<std::string> allowed_methods;
 	std::string root;
@@ -22,23 +21,38 @@ public:
 	int redirect_code;
 	std::string redirect_url;
 	std::map<int, std::string> error_pages;
-=======
-	std::string path; // dont
-	std::vector<std::string> allowed_methods; // ok
-	std::string root; // ok
-	std::string index; // ok
-	std::string upload_dir;
-	bool auto_index; // ok
-	int client_max_body_size; // ok
-	std::vector<std::string> cgi_extensions; // ok
-	std::string cgi_path; //ok
-	int redirect_code; //ok
-	std::string redirect_url; //ok
-	std::map<int, std::string> error_pages; // ok
->>>>>>> good-parsing
 
 	Location(std::vector<std::string> locationBlock);
 	~Location();
+
+	std::string getPath() const;
+	const std::vector<std::string>& getAllowedMethods() const;
+	std::string getRoot() const;
+	std::string getIndex() const;
+	std::string getUploadDir() const;
+	bool getAutoIndex() const;
+	int getMaxBodySize() const;
+	const std::vector<std::string>& getCgiExtensions() const;
+	std::string getCgiPath() const;
+	int getRedirectCode() const;
+	std::string getRedirectUrl() const;
+	const std::map<int, std::string>& getErrorPages() const;
+
+	void setPath(const std::string& path);
+	void setAllowedMethods(const std::vector<std::string>& methods);
+	void setRoot(const std::string& root);
+	void setIndex(const std::string& index);
+	void setUploadDir(const std::string& uploadDir);
+	void setAutoIndex(bool autoIndex);
+	void setClientMaxBodySize(int size);
+	void setCgiExtensions(const std::vector<std::string>& extensions);
+	void setCgiPath(const std::string& cgiPath);
+	void setRedirectCode(int code);
+	void setRedirectUrl(const std::string& url);
+	void setErrorPages(const std::map<int, std::string>& errorPages);
+	void addAllowedMethod(const std::string& method);
+	void addCgiExtension(const std::string& extension);
+	void addErrorPage(int code, const std::string& page);
 };
 
 class Server {
@@ -50,17 +64,12 @@ private:
 	std::string index;
 	std::vector<std::string> allowed_methods;
 	int client_max_body_size;
-<<<<<<< HEAD
-	std::map<int, std::string> error_pages;
-	std::map<std::string, Location> locations;
-=======
 	bool auto_index;
 	std::map<int, std::string> error_pages;
 
 	std::map<std::string, Location*> locations;
 
 	bool _default;
->>>>>>> good-parsing
 
 public:
 	Server(std::vector<std::string> confFile);
@@ -74,14 +83,10 @@ public:
 	int getClientMaxBodySize() const;
 	const std::map<int, std::string> getErrorPages() const;
 	const std::vector<std::string>& getAllowedMethods() const;
-<<<<<<< HEAD
-	const std::map<std::string, Location>& getLocations() const;
-	std::string getUploadDir();
-=======
 	const std::map<std::string, Location*>& getLocations() const;
 	int getMaxBodySize() const;
 	bool getAutoIndex() const;
-	std::map<int, std::string> getErrorPages() const;
+	std::map<int, std::string> getErrorPages();
 
 	bool getDefaultStatus();
 
@@ -96,5 +101,4 @@ public:
 	void setLocation(const std::string, Location *location);
 
 	void setDefaultServer();
->>>>>>> good-parsing
 };

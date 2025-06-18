@@ -60,12 +60,6 @@ static bool isPathOpenable(std::string &path) {
 	}
 }
 
-static std::string intToStdString(int nb) {
-	std::ostringstream oss117;
-	oss117 << nb;
-	return oss117.str();
-}
-
 static int getFileOctetsSize(std::string &path) {
 	struct stat file_stat;
 
@@ -159,9 +153,9 @@ Response::Response(Request *request, Server* server, int status) : _request(requ
 
 	// get server params based on path to ressource request
 	potential_server = "/";
-	std::map<std::string, Location> locations_nested = _server->getLocations();
+	std::map<std::string, Location*> locations_nested = _server->getLocations();
 	size_t max_match_length = 0;
-	for (std::map<std::string, Location>::iterator it = locations_nested.begin(); it != locations_nested.end(); ++it) {
+	for (std::map<std::string, Location*>::iterator it = locations_nested.begin(); it != locations_nested.end(); ++it) {
 		std::string key = it->first;
 		if (strncmp(key.c_str(), _request->getPathToResource().c_str(), key.length()) == 0) {
 			if (key.length() > max_match_length) {
@@ -174,33 +168,33 @@ Response::Response(Request *request, Server* server, int status) : _request(requ
 	// class instant with all config params for the current endpoint asked
 	cur_location = locations_nested[potential_server];
 	if (potential_server == "/" || potential_server.empty())
-		cur_location.path = "/";
-	if (cur_location.path.empty())
-		cur_location.path = potential_server;
-	if (cur_location.allowed_methods.empty())
-		cur_location.allowed_methods = server->getAllowedMethods();
-	if (cur_location.root.empty())
-		cur_location.root = server->getRoot();
-	if (cur_location.index.empty())
-		cur_location.index = server->getIndex();
-	if (!cur_location.client_max_body_size)
-		cur_location.client_max_body_size = server->getClientMaxBodySize();
-	if (cur_location.error_pages.size() == 0)
-		cur_location.error_pages = server->getErrorPages();
+		cur_location->getPath() = "/";
+	if (cur_location->path.empty())
+		cur_location->path = potential_server;
+	if (cur_location->allowed_methods.empty())
+		cur_location->allowed_methods = server->getAllowedMethods();
+	if (cur_location->root.empty())
+		cur_location->root = server->getRoot();
+	if (cur_location->index.empty())
+		cur_location->index = server->getIndex();
+	if (!cur_location->client_max_body_size)
+		cur_location->client_max_body_size = server->getMaxBodySize();
+	if (cur_location->error_pages.size() == 0)
+		cur_location->error_pages = server->getErrorPages();
 
 	// replace error pages if needed
-	if (cur_location.error_pages.find(400) != cur_location.error_pages.end())
-		bad_request_path = cur_location.error_pages[400];
-	if (cur_location.error_pages.find(413) != cur_location.error_pages.end())
-		request_entity_too_large_path = cur_location.error_pages[413];
-	if (cur_location.error_pages.find(500) != cur_location.error_pages.end())
-		internal_server_error_path = cur_location.error_pages[500];
-	if (cur_location.error_pages.find(404) != cur_location.error_pages.end())
-		not_found_path = cur_location.error_pages[404];
-	if (cur_location.error_pages.find(415) != cur_location.error_pages.end())
-		unsuported_media_path = cur_location.error_pages[415];
-	if (cur_location.error_pages.find(403) != cur_location.error_pages.end())
-		forbidden_path = cur_location.error_pages[403];
+	if (cur_location->error_pages.find(400) != cur_location->error_pages.end())
+		bad_request_path = cur_location->error_pages[400];
+	if (cur_location->error_pages.find(413) != cur_location->error_pages.end())
+		request_entity_too_large_path = cur_location->error_pages[413];
+	if (cur_location->error_pages.find(500) != cur_location->error_pages.end())
+		internal_server_error_path = cur_location->error_pages[500];
+	if (cur_location->error_pages.find(404) != cur_location->error_pages.end())
+		not_found_path = cur_location->error_pages[404];
+	if (cur_location->error_pages.find(415) != cur_location->error_pages.end())
+		unsuported_media_path = cur_location->error_pages[415];
+	if (cur_location->error_pages.find(403) != cur_location->error_pages.end())
+		forbidden_path = cur_location->error_pages[403];
 
 	//check if status is bad request
 	if (_status != 200)
@@ -246,7 +240,7 @@ void	Response::badRequest()
 		_body = pathfileToStringBackslashs(unsuported_media_path);
 		return;
 	}
-	else if ((int)_request->getBody().size() > cur_location.client_max_body_size) {
+	else if ((int)_request->getBody().size() > cur_location->client_max_body_size) {
 		_status = 413;
 		_text_status = "Request Entity Too Large";
 		_headers["Content-Type"] = "text/html";
@@ -269,9 +263,9 @@ void	Response::setPath()
 	_text_status = "OK";
 	_correctPath = true;
 
-	path = cur_location.root + _request->getPathToResource().substr(cur_location.path.length());
-	if (path[path.length() - 1] == '/' && cur_location.auto_index == false)
-		path.append(cur_location.index);
+	path = cur_location->root + _request->getPathToResource().substr(cur_location->path.length());
+	if (path[path.length() - 1] == '/' && cur_location->auto_index == false)
+		path.append(cur_location->index);
 	else if (_request->getPathToResource() == potential_server)
 		path.append("/");
 
@@ -304,9 +298,9 @@ void	Response::get()
 	if (!_correctPath)
 		return;
 
-	if (cur_location.redirect_code != 0 && !cur_location.redirect_url.empty()) {
+	if (cur_location->redirect_code != 0 && !cur_location->redirect_url.empty()) {
 		_status = 301;
-		_headers["Location"] = cur_location.redirect_url;
+		_headers["Location"] = cur_location->redirect_url;
 		return;
 	}
 
@@ -393,7 +387,7 @@ std::string	Response::checkExtension()
 void		Response::parseBodyBinary(std::istringstream &iss, std::string &line)
 {
 	(void)line;
-	std::string file_path = _server->getUploadDir() + "/" + _filename; // ça serait plus secure de faire une verification pour le "/"
+	std::string file_path = cur_location->getUploadDir() + "/" + _filename; // ça serait plus secure de faire une verification pour le "/"
 	std::cout << "Le path ou sera televerser le fichier est : " << file_path << std::endl;
 	std::ofstream outfile(file_path.c_str(), std::ios::binary);
 	if (!outfile.is_open()) {
@@ -432,7 +426,7 @@ void		Response::parseBodyBinary(std::istringstream &iss, std::string &line)
 
 void		Response::parseBodyText(std::istringstream &iss, std::string &line)
 {
-	std::string file_path = _server->getUploadDir() + "/" + _filename; // ça serait plus secure de faire une verification pour le "/"
+	std::string file_path = cur_location->getUploadDir() + "/" + _filename; // ça serait plus secure de faire une verification pour le "/"
 	std::cout << "Le path ou sera televerser le fichier est : " << file_path << std::endl;
 	std::ofstream outfile(file_path.c_str());
 	if (!outfile.is_open()) {

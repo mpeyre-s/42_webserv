@@ -14,7 +14,8 @@
 #include <cstring>
 #include <cstdio>
 
-#include "../includes/Server.hpp"
+#include "Server.hpp"
+#include "utils.hpp"
 
 static const size_t BUFFER_SIZES = 2048;
 
@@ -24,7 +25,7 @@ class Response {
 private:
 	Request* _request;
 	Server* _server;
-	Location cur_location;
+	Location* cur_location;
 
 
 	// Response

@@ -1,52 +1,5 @@
 #include "../includes/Server.hpp"
 
-<<<<<<< HEAD
-Location::Location() : client_max_body_size(0), redirect_code(0) {}
-
-Location::~Location() {}
-
-Server::Server() {
-	server_name = "localhost";
-	host = "0.0.0.0";
-	port = 8080;
-	root = "website/";
-	index = "index.html";
-	allowed_methods.push_back("GET");
-	client_max_body_size = 1048576;
-
-	error_pages[404] = "resources/not_found.html";
-	error_pages[500] = "resources/internal_server_error.html";
-
-	// Location /upload
-	Location upload_loc;
-	upload_loc.allowed_methods.push_back("POST");
-	upload_loc.upload_dir = "website/media";
-	upload_loc.client_max_body_size = 10;
-	locations["/upload"] = upload_loc;
-
-	// Location /files
-	Location files_loc;
-	files_loc.allowed_methods.push_back("GET");
-	files_loc.allowed_methods.push_back("DELETE");
-	files_loc.root = "website/media";
-	files_loc.auto_index = true;
-	locations["/files"] = files_loc;
-
-	// Location /private
-	Location private_loc;
-	private_loc.redirect_code = 301;
-	private_loc.redirect_url = "/";
-	locations["/private"] = private_loc;
-
-	// Location /cgi
-	Location cgi_loc;
-	cgi_loc.allowed_methods.push_back("GET");
-	cgi_loc.allowed_methods.push_back("POST");
-	cgi_loc.cgi_extensions.push_back(".php");
-	cgi_loc.cgi_path = "website/api";
-	cgi_loc.auto_index = false;
-	locations["/cgi"] = cgi_loc;
-=======
 Location::Location(std::vector<std::string> confFile) {
 	for (size_t i = 0; i < confFile.size(); i++) {
 		std::vector<std::string> line_token = split(confFile[i], " ");
@@ -342,8 +295,6 @@ Server::Server(std::vector<std::string> confFile) : _default(false) {
 	if (seen == false)
 		return;
 
-	std::cout << "LOCATION PARSING BEGIN" << std::endl;
-
 	// ==================== Locations parsing ==========================
 	bool in_location_block = false;
 	std::vector<std::string> locationBlock;
@@ -375,7 +326,6 @@ Server::Server(std::vector<std::string> confFile) : _default(false) {
 				locationBlock.push_back(line);
 		}
 	}
->>>>>>> good-parsing
 }
 
 Server::~Server() {}
@@ -408,18 +358,6 @@ const std::map<std::string, Location*>& Server::getLocations() const {
 	return locations;
 }
 
-<<<<<<< HEAD
-int Server::getClientMaxBodySize() const {
-	return client_max_body_size;
-}
-
-const std::map<int, std::string> Server::getErrorPages() const {
-	return error_pages;
-}
-
-std::string Server::getUploadDir() { // <== il faut le faire mais je sais pas comment
-	return "website/media";
-=======
 int Server::getMaxBodySize() const {
 	return client_max_body_size;
 }
@@ -428,7 +366,7 @@ bool Server::getAutoIndex() const {
 	return auto_index;
 }
 
-std::map<int, std::string> Server::getErrorPages() const {
+std::map<int, std::string> Server::getErrorPages() {
 	return error_pages;
 }
 
@@ -470,5 +408,116 @@ void Server::setClientMaxBody(int clientMaxBody){
 
 void Server::setDefaultServer() {
 	_default = true;
->>>>>>> good-parsing
+}
+
+// =================== LOCATION GETTERS =======================
+
+std::string Location::getPath() const {
+	return path;
+}
+
+const std::vector<std::string>& Location::getAllowedMethods() const {
+	return allowed_methods;
+}
+
+std::string Location::getRoot() const {
+	return root;
+}
+
+std::string Location::getIndex() const {
+	return index;
+}
+
+std::string Location::getUploadDir() const {
+	return upload_dir;
+}
+
+bool Location::getAutoIndex() const {
+	return auto_index;
+}
+
+int Location::getMaxBodySize() const {
+	return client_max_body_size;
+}
+
+const std::vector<std::string>& Location::getCgiExtensions() const {
+	return cgi_extensions;
+}
+
+std::string Location::getCgiPath() const {
+	return cgi_path;
+}
+
+int Location::getRedirectCode() const {
+	return redirect_code;
+}
+
+std::string Location::getRedirectUrl() const {
+	return redirect_url;
+}
+
+const std::map<int, std::string>& Location::getErrorPages() const {
+	return error_pages;
+}
+
+// =================== LOCATION SETTERS =======================
+
+void Location::setPath(const std::string& path) {
+	this->path = path;
+}
+
+void Location::setAllowedMethods(const std::vector<std::string>& methods) {
+	this->allowed_methods = methods;
+}
+
+void Location::setRoot(const std::string& root) {
+	this->root = root;
+}
+
+void Location::setIndex(const std::string& index) {
+	this->index = index;
+}
+
+void Location::setUploadDir(const std::string& uploadDir) {
+	this->upload_dir = uploadDir;
+}
+
+void Location::setAutoIndex(bool autoIndex) {
+	this->auto_index = autoIndex;
+}
+
+void Location::setClientMaxBodySize(int size) {
+	this->client_max_body_size = size;
+}
+
+void Location::setCgiExtensions(const std::vector<std::string>& extensions) {
+	this->cgi_extensions = extensions;
+}
+
+void Location::setCgiPath(const std::string& cgiPath) {
+	this->cgi_path = cgiPath;
+}
+
+void Location::setRedirectCode(int code) {
+	this->redirect_code = code;
+}
+
+void Location::setRedirectUrl(const std::string& url) {
+	this->redirect_url = url;
+}
+
+void Location::setErrorPages(const std::map<int, std::string>& errorPages) {
+	this->error_pages = errorPages;
+}
+
+void Location::addAllowedMethod(const std::string& method) {
+	this->allowed_methods.push_back(method);
+}
+
+void Location::addCgiExtension(const std::string& extension) {
+	this->cgi_extensions.push_back(extension);
+}
+
+void Location::addErrorPage(int code, const std::string& page) {
+	this->error_pages[code] = page;
 }

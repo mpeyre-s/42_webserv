@@ -1,7 +1,5 @@
 #include "../includes/main.hpp"
 
-<<<<<<< HEAD
-=======
 void printLocation(const Location *location, int indentLevel = 1) {
 	std::string indent(indentLevel * 8, ' ');
 	std::string subIndent((indentLevel + 1) * 4, ' ');
@@ -83,7 +81,6 @@ void printServerVector(const std::vector<Server*>& servers) {
 	std::cout << "\n===============================" << std::endl;
 }
 
->>>>>>> good-parsing
 int main(int ac, char **av) {
 	if (ac == 2) {
 		try {
@@ -96,11 +93,7 @@ int main(int ac, char **av) {
 			webserv.run();
 		}
 		catch(const std::exception& e) {
-<<<<<<< HEAD
-			std::cerr << e.what() << std::endl;
-=======
 			std::cerr << "\033[1;31m[ERROR]\033[1m " << e.what() << "\033[0m" << '\n';
->>>>>>> good-parsing
 		}
 	} else {
 		std::cout << "\033[1;34mUsage: \033[0m" << av[0] << " \033[1;32m<configuration_file>\033[0m" << std::endl;

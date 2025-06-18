@@ -6,6 +6,7 @@
 #include <vector>
 
 #include "Server.hpp"
+#include "utils.hpp"
 
 class Response;
 

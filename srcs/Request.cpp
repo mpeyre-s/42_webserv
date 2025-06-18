@@ -1,21 +1,6 @@
 #include "../includes/Request.hpp"
 #include "../includes/Response.hpp"
 
-std::vector<std::string> split(const std::string &str, std::string delimiter) {
-	std::vector<std::string> result;
-	size_t start_pos = 0;
-	size_t end_pos = str.find(delimiter);
-	while (end_pos != std::string::npos) {
-		result.push_back(str.substr(start_pos, end_pos - start_pos));
-		start_pos = end_pos + 1;
-		end_pos = str.find(delimiter, start_pos);
-	}
-	if (start_pos < str.length()) {
-		result.push_back(str.substr(start_pos));
-	}
-	return result;
-}
-
 Request::Request(std::string &raw) {
 	_parsing_error = 200;
 	std::vector<std::string> lines = split(raw, "\r\n");

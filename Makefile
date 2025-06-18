@@ -1,10 +1,6 @@
 # Project variables
 
-<<<<<<< HEAD
-SRCS = main.cpp ConfigParsing.cpp Server.cpp Webserv.cpp Request.cpp Response.cpp ClientConnexion.cpp
-=======
-SRCS = main.cpp ConfigParsing.cpp Server.cpp Webserv.cpp utils.cpp
->>>>>>> good-parsing
+SRCS = main.cpp ConfigParsing.cpp Server.cpp Webserv.cpp Request.cpp Response.cpp ClientConnexion.cpp utils.cpp
 
 SRCDIR = srcs/
 OBJDIR = objects/
