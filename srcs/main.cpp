@@ -44,7 +44,7 @@ void printServerVector(const std::vector<Server*>& servers) {
 
 	for (size_t i = 0; i < servers.size(); i++) {
 		Server* server = servers[i];
-		std::cout << "\n----- Server " << i + 1 << " -----" << std::endl;
+		std::cout << "\n----- Server " << i + 1 << (server->getDefaultStatus() ? " (Default)" : "") << " -----" << std::endl;
 		std::cout << "Server Name: " << server->getServerName() << std::endl;
 		std::cout << "Host: " << server->getHost() << std::endl;
 		std::cout << "Port: " << server->getPort() << std::endl;

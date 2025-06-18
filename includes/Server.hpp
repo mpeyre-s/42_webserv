@@ -40,6 +40,8 @@ private:
 
 	std::map<std::string, Location*> locations;
 
+	bool _default;
+
 public:
 	Server(std::vector<std::string> confFile);
 	~Server();
@@ -55,6 +57,8 @@ public:
 	bool getAutoIndex() const;
 	std::map<int, std::string> getErrorPages() const;
 
+	bool getDefaultStatus();
+
 	void setServerName(const std::string& server);
 	void setHost(std::string& hostname);
 	void setPort(int& porttmp);
@@ -64,4 +68,6 @@ public:
 	void addAllowedMethod(std::string method);
 	void setClientMaxBody(int clientMaxBody);
 	void setLocation(const std::string, Location *location);
+
+	void setDefaultServer();
 };

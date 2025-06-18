@@ -153,14 +153,14 @@ Location::Location(std::vector<std::string> confFile) {
 
 Location::~Location() {}
 
-Server::Server(std::vector<std::string> confFile) {
+Server::Server(std::vector<std::string> confFile) : _default(false) {
 	// ==================== Default Server parsing ==========================
 	bool reach_end_default = false;
 	size_t actual_line = 0;
 	for (size_t i = 0; i < confFile.size() && reach_end_default == false; i++) {
 		++actual_line;
 
-		if (confFile[i + 1].find("location") != std::string::npos)
+		if (i + 1 < confFile.size() && confFile[i + 1].find("location") != std::string::npos)
 			reach_end_default = true;
 
 		std::vector<std::string> line_token = split(confFile[i], " ");
@@ -284,6 +284,19 @@ Server::Server(std::vector<std::string> confFile) {
 
 	}
 
+	// if no location return to avoid parse location
+	bool seen = false;
+	for (size_t i = actual_line; i < confFile.size(); i++) {
+		if (confFile[i].find("location") != std::string::npos) {
+			seen = true;
+			break;
+		}
+	}
+	if (seen == false)
+		return;
+
+	std::cout << "LOCATION PARSING BEGIN" << std::endl;
+
 	// ==================== Locations parsing ==========================
 	bool in_location_block = false;
 	std::vector<std::string> locationBlock;
@@ -298,7 +311,8 @@ Server::Server(std::vector<std::string> confFile) {
 				in_location_block = true;
 				locationBlock.clear();
 				continue;
-			} else if (line.find("location") != std::string::npos) {
+			}
+			else if (line_token[0] == "location") {
 				throw std::invalid_argument(confFile[i]);
 			}
 		} else {
@@ -358,6 +372,10 @@ std::map<int, std::string> Server::getErrorPages() const {
 	return error_pages;
 }
 
+bool Server::getDefaultStatus() {
+	return _default;
+}
+
 void Server::setServerName(const std::string& server) {
 	server_name = server;
 }
@@ -388,4 +406,8 @@ void Server::addAllowedMethod(std::string method){
 
 void Server::setClientMaxBody(int clientMaxBody){
 	client_max_body_size =  clientMaxBody;
+}
+
+void Server::setDefaultServer() {
+	_default = true;
 }

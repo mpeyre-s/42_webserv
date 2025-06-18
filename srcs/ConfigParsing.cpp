@@ -80,8 +80,8 @@ ConfigParsing::ConfigParsing(std::string &configFile) {
 	if (isAllLinesEndedBySemicolon(configFile) != 0)
 		throw std::invalid_argument(error_semicolon_line.append(intToStdString(isAllLinesEndedBySemicolon(configFile))));
 	size_t nb_potential_servers = nbPotentialServers(configFile);
-	if (nb_potential_servers < 2)
-		throw std::invalid_argument("Invalid configuration file: must be minimum 2 servers");
+	if (nb_potential_servers < 1)
+		throw std::invalid_argument("Invalid configuration file: must be minimum 1 server");
 
 	// slice config file per server, trim leading spaces, skip empty lines
 	std::ifstream file(configFile.c_str());
@@ -117,6 +117,9 @@ ConfigParsing::ConfigParsing(std::string &configFile) {
 			}
 			if (brace_count == 0) {
 				try {
+					if (serverBlock.back() == "}")
+						serverBlock.pop_back();
+
 					_list_servers.push_back(new Server(serverBlock));
 					serverBlock.clear();
 				}
@@ -130,9 +133,37 @@ ConfigParsing::ConfigParsing(std::string &configFile) {
 
 	file.close();
 
-	// check if the first serv is localhost and accepts all requests
-	// check if serv has minimum required (for / if auto index off and no index throw error) etc...
-	// ...
+	// logic tests (minimum required)
+	if (_list_servers.size() < 1)
+		throw std::invalid_argument("Parsing: Must be minimum 1 server");
+	for (size_t i = 0; i < _list_servers.size(); i++) {
+		if (_list_servers[i]->getHost().empty() || _list_servers[i]->getPort() == 0 || _list_servers[i]->getServerName().empty() || _list_servers[i]->getRoot().empty())
+			throw std::invalid_argument("Parsing: Must be minimum by server: a server_name + valid listen (0.0.0.0:0000) + valid root");
+		if (_list_servers[i]->getIndex().empty() && _list_servers[i]->getAutoIndex() == false)
+			throw std::invalid_argument("Parsing: Must be an index if auto index off");
+		if (_list_servers[i]->getLocations().size() == 0 && (_list_servers[i]->getAllowedMethods().size() == 0 || _list_servers[i]->getRoot().empty()))
+			throw std::invalid_argument("Parsing: Must be minium 1 method allowed");
+		if (_list_servers[i]->getLocations().size() == 0 && _list_servers[i]->getRoot().empty())
+			throw std::invalid_argument("Parsing: Must be minium a root if not define in location");
+	}
+
+	// set default servers
+	std::map<std::string, int> ip_seen;
+	for (size_t i = 0; i < _list_servers.size(); i++) {
+		std::string ip = _list_servers[i]->getHost();
+		int port = _list_servers[i]->getPort();
+		bool found = false;
+		for (std::map<std::string, int>::iterator it = ip_seen.begin(); it != ip_seen.end(); ++it) {
+			if (ip == it->first && port == it->second) {
+				found = true;
+				break;
+			}
+		}
+		if (found == false) {
+			ip_seen[ip] = port;
+			_list_servers[i]->setDefaultServer();
+		}
+	}
 }
 
 ConfigParsing::~ConfigParsing() {
