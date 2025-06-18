@@ -129,7 +129,7 @@ Location::Location(std::vector<std::string> confFile) {
 		if (line_token[0] == "cgi_path") {
 			std::string last_token = line_token[line_token.size() - 1].substr(0, line_token[line_token.size() - 1].length() - 1);
 			if (cgi_path.empty() && last_token.length() > 1 && last_token[last_token.length() - 1] == '/') {
-				cgi_path = line_token[1];
+				cgi_path = last_token;
 				continue;
 			} else
 				throw std::invalid_argument(confFile[i]);
