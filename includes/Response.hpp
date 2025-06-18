@@ -50,6 +50,7 @@ private:
 	std::string request_entity_too_large_path;
 	std::string unsuported_media_path;
 	std::string forbidden_path;
+	std::string method_not_allowed;
 
 	std::map<std::string, std::string> _file_types; // ext -> content type
 
@@ -70,11 +71,12 @@ private:
 	void		parseBody(std::string);
 	std::string	getContentTypeFromPath(std::string &path);
 	std::string	checkExtension();
-	bool		isCGI();
+	bool		isValidMethodExtension();
 	bool		isValidCgi();
 	void		create_env();
-	void		execCGI(std::string, std::vector<char *>);
 	void		parseCgiBody(std::string cgi_body);
+	void		getCGI(std::string, std::vector<char *>);
+	void		postCGI(std::string, std::vector<char *>);
 
 
 public:

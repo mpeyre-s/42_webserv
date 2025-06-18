@@ -147,6 +147,7 @@ Response::Response(Request *request, Server* server, int status) : _request(requ
 	request_entity_too_large_path = "resources/request_entity_too_large.html";
 	unsuported_media_path = "resources/unsuported_media_path.html";
 	forbidden_path = "resources/forbidden.html";
+	method_not_allowed = "ressources/method_not_allowed.html";
 
 	// default params
 	_http_version = "HTTP/1.1";
@@ -240,8 +241,21 @@ void	Response::badRequest()
 		_body = pathfileToStringBackslashs(bad_request_path);
 		return;
 	}
+	else if (_status == 403)
+	{
+		_text_status = "Forbidden";
+		_headers["Content-Type"] = "text/html";
+		_headers["Content-Length"] = intToStdString(getFileOctetsSize(forbidden_path));
+		_body = pathfileToStringBackslashs(forbidden_path);
+	}
+	else if (_status == 405)
+	{
+		_text_status = "Method not Allowed";
+		_headers["Content-Type"] = "text/html";
+		_headers["Content-Length"] = intToStdString(getFileOctetsSize(forbidden_path));
+		_body = pathfileToStringBackslashs(forbidden_path);
+	}
 	else if (_status == 415) {
-		_status = 413;
 		_text_status = "Unsupported Media Type";
 		_headers["Content-Type"] = "text/html";
 		_headers["Content-Length"] = intToStdString(getFileOctetsSize(unsuported_media_path));
@@ -276,10 +290,8 @@ void	Response::setPath()
 		path = cur_location.cgi_path +  _request->getPathToResource().substr(cur_location.path.length());
 		_isCGI = true;
 	}
-	else {
+	else
 		path = cur_location.root + _request->getPathToResource().substr(cur_location.path.length());
-		_isCGI = true;
-	}
 
 	if (path[path.length() - 1] == '/' && cur_location.auto_index == false)
 		path.append(cur_location.index);
@@ -313,10 +325,6 @@ void	Response::setPath()
 
 void	Response::get()
 {
-	setPath();
-	if (!_correctPath)
-		return;
-
 	if (cur_location.redirect_code != 0 && !cur_location.redirect_url.empty()) {
 		_status = 301;
 		_headers["Location"] = cur_location.redirect_url;
@@ -495,9 +503,6 @@ void	Response::parseBody(std::string body)
 
 void	Response::post()
 {
-	setPath();
-	if (!_correctPath)
-		return ;
 	parseBody(_request->getBody());
 
 	if (_status == 200)
@@ -512,10 +517,8 @@ void	Response::post()
 
 // ================================ DELETE LOGIC =================================
 
-void	Response::Delete() {
-	setPath();
-	if (!_correctPath)
-		return ;
+void	Response::Delete()
+{
 
 	if (remove(path.c_str()) == 0) {
 		_headers["Content-Type"] = "text/plain";
@@ -534,10 +537,7 @@ void	Response::Delete() {
 	}
 	else {
 		_status = 403;
-		_text_status = "Forbidden";
-		_headers["Content-Type"] = "text/html";
-		_headers["Content-Length"] = intToStdString(getFileOctetsSize(forbidden_path));
-		_body = pathfileToStringBackslashs(forbidden_path);
+		badRequest();
 	}
 }
 
@@ -545,8 +545,11 @@ void	Response::process()
 {
 	if (_badRequest)
 		badRequest();
-	if (isCGI()) // il faut mieux le gerer. Parfois c'est un cgi c'est juste qu'il n'est pas handle
-		cgi(); // attention je ne gere pas bien les erreurs, il faut qu'à chaque fois je renvoie un code d'erreur ou explication
+	setPath();
+	if (!_correctPath)
+		return;
+	if (_isCGI)
+		cgi();
 	else if (_request->getMethodType() == "GET")
 		get();
 	else if (_request->getMethodType() == "POST")
@@ -584,10 +587,8 @@ Response::~Response() {}
 
 
 
-bool	Response::isCGI()
+bool	Response::isValidMethodExtension()
 {
-	setPath(); // <== me donne l'info avec _isCGI
-
 	// Check Method available
 	std::string Method = _request->getMethodType();
 	std::vector<std::string>::iterator it = cur_location.allowed_methods.begin();
@@ -597,15 +598,15 @@ bool	Response::isCGI()
 		if (*it == Method)
 			break ;
 	}
-	if (it == cur_location.allowed_methods.end())
+	if (it == cur_location.allowed_methods.end()) {
+		_status = 405;
 		return false ;
-
+	}
 	//Check extension available
 	size_t pos = path.find('?');
 	if (pos == std::string::npos)
 		pos = path.size();
 	std::string sub_path = path.substr(0, pos);
-	std::cout << sub_path << std::endl;
 	for (std::vector<std::string>::iterator it = cur_location.cgi_extensions.begin(); it != cur_location.cgi_extensions.end(); ++it)
 	{
 		size_t ext_pos = sub_path.find(*it);
@@ -613,6 +614,7 @@ bool	Response::isCGI()
 		if (ext_pos != std::string::npos)
 			return true ;
 	}
+	_status = 403;
 	return false ;
 }
 
@@ -621,29 +623,30 @@ bool	Response::isValidCgi()
 {
 	size_t pos = path.find('?');
 
-
 	if (pos == std::string::npos)
 		pos = path.size();
 
 	// On doit avoir un chemin valide
 	std::string check_path = path.substr(0, pos);
 	if (!isPathOpenable(check_path)) {
+		_status = 404;
 		return false;
 	}
 
 	//Vérifier que le fichier est exécutable
 	struct stat st;
 	if (stat(check_path.c_str(), &st) == -1)
+	{
+		_status = 403;
 		return false;
+	}
 	if (!(st.st_mode & S_IXUSR)) // Vérifie si le propriétaire peut exécuter le fichier
+	{
+		_status = 403;
 		return false;
-
-
+	}
 	return true;
 }
-
-
-
 
 void	Response::parseCgiBody(std::string cgi_body)
 {
@@ -671,7 +674,7 @@ void	Response::parseCgiBody(std::string cgi_body)
 }
 
 
-void	Response::execCGI(std::string cgi_path, std::vector<char *> envp )
+void	Response::getCGI(std::string cgi_path, std::vector<char *> envp )
 {
 	int	fd[2];
 	if (pipe(fd) == -1) {
@@ -753,6 +756,14 @@ void	Response::create_env()
 	_env.push_back(real_path);
 	_env.push_back(protocol);
 
+	// Logique POST mais ok de laisser dans GET
+	std::map<std::string, std::string> headers = _request->getHeaders();
+	std::string content_type = "CONTENT_TYPE=" + headers["Content-Type"];
+	std::string content_length = "CONTENT_LENGTH=" + headers["Content-Length"];
+	_env.push_back(content_length);
+	_env.push_back(content_type);
+
+	// LOGIQUE PHP
 	if (real_path.size() < 4)
 		return ;
 	std::string extension = real_path.substr(real_path.size() - 4);
@@ -765,10 +776,12 @@ void	Response::create_env()
 
 void	Response::cgi()
 {
-	if (!isValidCgi())
+	if (!isValidMethodExtension() || !isValidCgi())
+	{
+		badRequest();
 		return ;
+	}
 	create_env();
-
 	std::vector<char*> envp;
 	for (size_t i = 0; i < _env.size(); ++i) {
 		envp.push_back(const_cast<char*>(_env[i].c_str()));
@@ -780,5 +793,95 @@ void	Response::cgi()
 		pos = path.size();
 	std::string cgi_path = path.substr(0, pos);
 
-	execCGI(cgi_path, envp);
+
+	if (_request->getMethodType() == "GET")
+		getCGI(cgi_path, envp);
+	else if (_request->getMethodType() == "POST")
+		postCGI(cgi_path, envp);
+	else
+	{
+		_status = 405;
+		badRequest();
+	}
+}
+
+
+void	Response::postCGI(std::string cgi_path, std::vector<char *> envp)
+{
+	std::string body = _request->getBody();
+
+	int	fd_stdin[2];
+	int	fd_stdout[2];
+	if (pipe(fd_stdin) == -1 || pipe(fd_stdout) == -1)
+	{
+		_status = 500;
+		badRequest();
+		std::cerr << "Problem with pipe." << std::endl;
+		return ;
+	}
+
+	pid_t pid = fork();
+	if (pid == -1) {
+		_status = 500;
+		badRequest();
+		std::cerr << "Problem with fork" << std::endl;
+		return ;
+	}
+	if (pid == 0) // <= enfant
+	{
+		close(fd_stdin[1]);
+		close(fd_stdout[0]);
+		dup2(fd_stdin[0], STDIN_FILENO); // on clone le STDIN sur lequel on va lire dessus
+		dup2(fd_stdout[1], STDOUT_FILENO);
+		close(fd_stdin[0]);
+		close(fd_stdout[1]);
+
+		char *av[3];
+		if (_isphp)
+		{
+			av[0] = const_cast<char*>(PHP_PATH);
+			av[1] = const_cast<char *>(cgi_path.c_str());
+			av[2] = NULL;
+		}
+		else
+		{
+			av[0] = const_cast<char *>(cgi_path.c_str());
+			av[1] = NULL;
+			av[2] = NULL;
+		}
+		execve(av[0], av, envp.data());
+
+		std::cout << "CGI execution failed" << std::endl; // Que doit on faire ?
+		exit(1);
+	}
+	else // <= parent
+	{
+		size_t nb_written = 0;
+		size_t total = 0;
+		while (total < body.size())
+		{
+			nb_written = write(fd_stdin[1], body.data() + total, body.size() - total);
+			if (nb_written <= 0)
+				break;
+			total += nb_written;
+		}
+		close(fd_stdin[1]);
+		close(fd_stdout[1]);
+
+		char buffer[4096];
+		std::string cgi_body;
+		ssize_t nb_read = 1;
+		while (nb_read) {
+			nb_read = read(fd_stdout[0], buffer, sizeof(buffer));
+			cgi_body.append(buffer, nb_read);
+		}
+		close(fd_stdout[0]);
+
+
+		int status;
+		waitpid(pid, &status, 0);
+		_status = 200;
+		parseCgiBody(cgi_body);
+		_headers["Content-Length"] = intToStdString(_body.size());
+	}
 }

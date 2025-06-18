@@ -27,16 +27,26 @@
 
 		<section class="card">
 			<h2>CGI GET Request</h2>
-			<form action="/cgi/hello.py" method="get">
+			<form id="get-form" method="get">
 				<input type="text" name="name" placeholder="Enter a name">
+				<select id="get-ext">
+					<option value="py">.py</option>
+					<option value="php">.php</option>
+					<option value="pl">.pl</option>
+				</select>
 				<button type="submit">Send GET</button>
 			</form>
 		</section>
 
 		<section class="card">
 			<h2>CGI POST Request</h2>
-			<form action="/cgi" method="post">
+			<form id="post-form" method="post">
 				<input type="text" name="message" placeholder="Enter a message">
+				<select id="post-ext">
+					<option value="py">.py</option>
+					<option value="php">.php</option>
+					<option value="pl">.pl</option>
+				</select>
 				<button type="submit">Send POST</button>
 			</form>
 		</section>
@@ -47,7 +57,6 @@
 	</footer>
 
 	<style>
-
 		body {
 			font-family: Arial, sans-serif;
 			line-height: 1.6;
@@ -87,14 +96,13 @@
 			padding: 0 1rem;
 		}
 
-		footer {
+		footer
+		{
 			background-color: #333;
 			color: white;
 			text-align: center;
 			padding: 1rem;
-			position: fixed;
-			bottom: 0;
-			width: 100%;
+			margin-top: 2rem;
 		}
 
 		.card {
@@ -112,7 +120,7 @@
 			gap: 1rem;
 		}
 
-		.card input {
+		.card input, .card select {
 			padding: 0.5rem;
 			border: none;
 			border-radius: 5px;
@@ -134,5 +142,18 @@
 			color: #fff;
 		}
 	</style>
+
+	<script>
+		document.getElementById("get-form").addEventListener("submit", function (e) {
+			const ext = document.getElementById("get-ext").value;
+			this.action = "/cgi/hello." + ext;
+		});
+
+		document.getElementById("post-form").addEventListener("submit", function (e) {
+			const ext = document.getElementById("post-ext").value;
+			this.action = "/cgi/send." + ext;
+		});
+	</script>
 </body>
 </html>
+
