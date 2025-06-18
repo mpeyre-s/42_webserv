@@ -286,14 +286,21 @@ void	Response::setPath()
 	_correctPath = true;
 	_isCGI = false ;
 
-	if (cur_location->cgi_path.empty() == false && cur_location->cgi_extensions.size() > 0) {
-		path = cur_location->cgi_path +  _request->getPathToResource().substr(cur_location->path.length());
-		_isCGI = true;
+	if (cur_location->cgi_path.empty() == false && cur_location->cgi_extensions.size() > 0)
+	{
+		std::string suffix = _request->getPathToResource().substr(cur_location->path.length());
+		if (suffix[0] == '/')
+			suffix.erase(0, 1);
+		path = cur_location->cgi_path + suffix;
+		_isCGI = true ;
 	}
-	else
-		path = cur_location->root + _request->getPathToResource().substr(cur_location->path.length());
+	else {
 
 	path = cur_location->getRoot() + _request->getPathToResource().substr(cur_location->getPath().length());
+	std::cout << "Le path est : " << path << std::endl;
+	std::cout << "cur_location->getRoot() est : " << cur_location->getRoot() << std::endl;
+	std::cout << "_request->getPathToResource().substr(cur_location->getPath().length()) est : " << _request->getPathToResource().substr(cur_location->getPath().length()) << std::endl;
+	}
 	if (path[path.length() - 1] == '/' && cur_location->getAutoIndex() == false)
 		path.append(cur_location->getIndex());
 	else if (_request->getPathToResource() == potential_server)
@@ -307,11 +314,12 @@ void	Response::setPath()
 			path.append("/" + _request->getPathToResource().substr(_request->getPathToResource().find("=") + 1));
 		}
 	}
+	std::cout << "Le path avant de sortir de set path :" << path << std::endl; // =============================================================================
 	if (_isCGI)
 		return ;
 
 	//check if path is correct
-	if (isPathOpenable(path) == false)
+	if (isPathOpenable(path) == false) // il faut le mettre dans bad request sinon le process renvoie error 500
 	{
 		_status = 404;
 		_text_status = "Not Found";
@@ -413,7 +421,7 @@ std::string	Response::checkExtension()
 void		Response::parseBodyBinary(std::vector<char> vec, size_t len)
 {
 	(void)len;
-	std::string file_path = "website/media/" + _filename; // ça serait plus secure de faire une verification pour le "/" + file path already exist
+	std::string file_path = "website/media/" + _filename; // A MODIFER ATTENTION !!!!!!!!!!
 	std::ofstream outfile(file_path.c_str(), std::ios::binary);
 	if (!outfile.is_open()) {
 		_status = 500;
@@ -429,7 +437,6 @@ void		Response::parseBodyBinary(std::vector<char> vec, size_t len)
 			count++;
 		if (count == 2)
 			break;
-		write(1, &vec[start], 1);
 		start++;
 	}
 	start += 4;
@@ -449,8 +456,8 @@ void		Response::parseBodyBinary(std::vector<char> vec, size_t len)
 
 void		Response::parseBodyText(std::istringstream &iss, std::string &line)
 {
-	// Je pense que cette logique n'est pas bonne
 	std::string file_path = "website/media/" + _filename; // ça serait plus secure de faire une verification pour le "/"
+	std::cout << _filename << " est le filename " << std::endl;
 	std::ofstream outfile(file_path.c_str());
 	if (!outfile.is_open()) {
 		_status = 500;
@@ -627,13 +634,13 @@ bool	Response::isValidCgi()
 	if (pos == std::string::npos)
 		pos = path.size();
 
+
 	// On doit avoir un chemin valide
 	std::string check_path = path.substr(0, pos);
 	if (!isPathOpenable(check_path)) {
 		_status = 404;
 		return false;
 	}
-
 	//Vérifier que le fichier est exécutable
 	struct stat st;
 	if (stat(check_path.c_str(), &st) == -1)
