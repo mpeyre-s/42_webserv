@@ -32,17 +32,25 @@ void Webserv::prepareSockets()
 		std::memset(&ep.addr, 0, sizeof(ep.addr));
 		ep.addr.sin_family = AF_INET;
 		ep.addr.sin_port = htons(_list_servers[i]->getPort());
-		std::string host = _list_servers[i]->getHost();
-		if (host.empty() || host == "0.0.0.0")
-			ep.addr.sin_addr.s_addr = htonl(INADDR_ANY);
-		else {
-			if (inet_pton(AF_INET, host.c_str(), &ep.addr.sin_addr) <= 0)
-				throw std::runtime_error("Adresse IP invalide pour le host : " + host);
-		}
 
-		// Bind
-		if (bind(ep.fd, reinterpret_cast<sockaddr*>(&ep.addr), sizeof(ep.addr)) < 0)
-			throw std::runtime_error("Erreur lors du bind");
+
+	std::string host = _list_servers[i]->getHost();
+	std::cout << "Binding on IP: " << host << ", port: " << _list_servers[i]->getPort() << std::endl;
+
+	if (host.empty() || host == "0.0.0.0") {
+		ep.addr.sin_addr.s_addr = htonl(INADDR_ANY);
+	} else {
+		int ret = inet_pton(AF_INET, host.c_str(), &ep.addr.sin_addr);
+		if (ret <= 0)
+			throw std::runtime_error("Adresse IP invalide pour le host : " + host);
+	}
+
+	// Tentative de bind
+	if (bind(ep.fd, reinterpret_cast<sockaddr*>(&ep.addr), sizeof(ep.addr)) < 0) {
+		std::cerr << "Erreur bind sur IP " << host << ": " << strerror(errno) << std::endl;
+		throw std::runtime_error("Erreur lors du bind");
+	}
+
 
 		// Listen
 		if (listen(ep.fd, SOMAXCONN) < 0)
