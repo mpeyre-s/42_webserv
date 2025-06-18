@@ -20,6 +20,9 @@
 
 static const size_t BUFFER_SIZES = 2048;
 
+#define ABSOLUTE_PATH "/Users/spike/42/WebServ/"
+#define PHP_PATH "/opt/homebrew/opt/php/bin/php-cgi"
+
 class Request;
 
 class Response {
@@ -55,6 +58,9 @@ private:
 	std::string path;
 	std::string _boundary;
 	bool		_correctPath;
+	std::vector<std::string> _env;
+	bool		_isphp;
+	bool		_isCGI;
 
 	std::string	checkHeader();
 	void		parsePostHeader(std::istringstream& iss, std::string& line);
@@ -65,8 +71,11 @@ private:
 	std::string	getContentTypeFromPath(std::string &path);
 	std::string	checkExtension();
 	bool		isCGI();
-	void		cgiGet();
-	void		cgiPost();
+	bool		isValidCgi();
+	void		create_env();
+	void		execCGI(std::string, std::vector<char *>);
+	void		parseCgiBody(std::string cgi_body);
+
 
 public:
 	Response(Request *request ,Server* server, int status);

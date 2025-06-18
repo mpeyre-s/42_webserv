@@ -33,6 +33,10 @@ void Webserv::prepareSockets()
 		ep.addr.sin_family = AF_INET;
 		ep.addr.sin_addr.s_addr = htonl(INADDR_ANY); // à vérifier -> dépend si le serveur à une IP
 		ep.addr.sin_port = htons(_list_servers[i]->getPort());
+		std::string host = _list_servers[i]->getHost();
+		if (inet_pton(AF_INET, host.c_str(), &ep.addr.sin_addr) <= 0) {
+			throw std::runtime_error("Adresse IP invalide pour le host : " + host);
+}
 
 		// Bind
 		if (bind(ep.fd, reinterpret_cast<sockaddr*>(&ep.addr), sizeof(ep.addr)) < 0)
@@ -96,6 +100,7 @@ void Webserv::handleNewConnexion(int server_fd)
 	_fds.push_back(client_poll);
 
 	// Création de l'instance de la class ClientConnexion pour gérer ce nouveau client
+	// il va falloir envoyer la liste de serveur car on va devoir gerer le bon serveur correspondant
 	ClientConnexion *client = new ClientConnexion(client_fd, _correspondingServ[server_fd], TO_READ);
 	_clients[client_fd] = client;
 }

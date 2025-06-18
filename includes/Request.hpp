@@ -17,7 +17,7 @@ private:
 	std::string _method_type;
 	std::string _path_to_resource;
 	std::string _http_version;
-	std::map<std::string, std::string> _headers;
+	std::map<std::string, std::string> _headers;  //  il va falloir qu'on se serve du Host ici pour verifier le serveur
 	std::string _body;
 	std::vector<char> _vec_char;
 	size_t	_bufferLen;
@@ -27,7 +27,7 @@ private:
 	std::string _const_http_version;
 
 public:
-	Request(std::string &raw, std::vector<char>, size_t);
+	Request(std::string &raw, std::vector<char>, size_t); // ballec de size_t par contre il faudrait envoyer le vecteur de serveur pour faire la verif
 	~Request();
 
 	Request &operator=(const Request &other);

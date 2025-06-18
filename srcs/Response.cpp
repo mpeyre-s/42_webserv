@@ -270,11 +270,16 @@ void	Response::setPath()
 {
 	_text_status = "OK";
 	_correctPath = true;
+	_isCGI = false ;
 
-	if (cur_location.cgi_path.empty() == false && cur_location.cgi_extensions.size() > 0)
+	if (cur_location.cgi_path.empty() == false && cur_location.cgi_extensions.size() > 0) {
 		path = cur_location.cgi_path +  _request->getPathToResource().substr(cur_location.path.length());
-	else
+		_isCGI = true;
+	}
+	else {
 		path = cur_location.root + _request->getPathToResource().substr(cur_location.path.length());
+		_isCGI = true;
+	}
 
 	if (path[path.length() - 1] == '/' && cur_location.auto_index == false)
 		path.append(cur_location.index);
@@ -289,6 +294,8 @@ void	Response::setPath()
 			path.append("/" + _request->getPathToResource().substr(_request->getPathToResource().find("=") + 1));
 		}
 	}
+	if (_isCGI)
+		return ;
 
 	//check if path is correct
 	if (isPathOpenable(path) == false)
@@ -302,7 +309,7 @@ void	Response::setPath()
 	}
 }
 
-// ================================ Toute la logique de get =================================
+// ======================================================= Toute la logique de get ===================================================================
 
 void	Response::get()
 {
@@ -396,6 +403,7 @@ std::string	Response::checkExtension()
 
 void		Response::parseBodyBinary(std::vector<char> vec, size_t len)
 {
+	(void)len;
 	std::string file_path = _server->getUploadDir() + "/" + _filename; // ça serait plus secure de faire une verification pour le "/" + file path already exist
 	std::ofstream outfile(file_path.c_str(), std::ios::binary);
 	if (!outfile.is_open()) {
@@ -406,7 +414,7 @@ void		Response::parseBodyBinary(std::vector<char> vec, size_t len)
 	}
 	size_t start = 1;
 	int count = 0;
-	while (start < len - 4)
+	while (start < vec.size() - 4)
 	{
 		if (vec[start] == '\r' && vec[start + 1] == '\n' && vec[start + 2] == '\r' && vec[start + 3] == '\n')
 			count++;
@@ -418,7 +426,7 @@ void		Response::parseBodyBinary(std::vector<char> vec, size_t len)
 	start += 4;
 
 	size_t i = start;
-	while (i < len)
+	while (i < vec.size())
 	{
 		if (vec[i] == '\r' && vec[i + 1] == '\n' && vec[i + 2] == '-' && vec[i + 3] == '-' && vec[i + 4] == '-' && vec[i + 5] == '-')
 			break ;
@@ -537,8 +545,8 @@ void	Response::process()
 {
 	if (_badRequest)
 		badRequest();
-	if (isCGI())
-		cgi();
+	if (isCGI()) // il faut mieux le gerer. Parfois c'est un cgi c'est juste qu'il n'est pas handle
+		cgi(); // attention je ne gere pas bien les erreurs, il faut qu'à chaque fois je renvoie un code d'erreur ou explication
 	else if (_request->getMethodType() == "GET")
 		get();
 	else if (_request->getMethodType() == "POST")
@@ -568,12 +576,17 @@ std::string Response::getStringResponse() {
 Response::~Response() {}
 
 
+
+
+
+
+
+
+
+
 bool	Response::isCGI()
 {
-	setPath();
-	// if (!_correctPath)
-	// 	std::cout << "PATH STRING = " << path << std::endl;
-
+	setPath(); // <== me donne l'info avec _isCGI
 
 	// Check Method available
 	std::string Method = _request->getMethodType();
@@ -588,48 +601,184 @@ bool	Response::isCGI()
 		return false ;
 
 	//Check extension available
-	std::string sub_path = path.substr(cur_location.cgi_path.size() + 1);
-	size_t first_slash = sub_path.find('/');
-	if (first_slash == std::string::npos)
-		first_slash = sub_path.size();
-
-	bool valid_extension = false;
+	size_t pos = path.find('?');
+	if (pos == std::string::npos)
+		pos = path.size();
+	std::string sub_path = path.substr(0, pos);
+	std::cout << sub_path << std::endl;
 	for (std::vector<std::string>::iterator it = cur_location.cgi_extensions.begin(); it != cur_location.cgi_extensions.end(); ++it)
 	{
 		size_t ext_pos = sub_path.find(*it);
-		if (ext_pos != std::string::npos && ext_pos < first_slash)
-		{
-			valid_extension = true;
-			break;
-		}
+
+		if (ext_pos != std::string::npos)
+			return true ;
 	}
-	if (!valid_extension)
+	return false ;
+}
+
+
+bool	Response::isValidCgi()
+{
+	size_t pos = path.find('?');
+
+
+	if (pos == std::string::npos)
+		pos = path.size();
+
+	// On doit avoir un chemin valide
+	std::string check_path = path.substr(0, pos);
+	if (!isPathOpenable(check_path)) {
 		return false;
+	}
+
+	//Vérifier que le fichier est exécutable
+	struct stat st;
+	if (stat(check_path.c_str(), &st) == -1)
+		return false;
+	if (!(st.st_mode & S_IXUSR)) // Vérifie si le propriétaire peut exécuter le fichier
+		return false;
+
 
 	return true;
 }
 
-void	Response::cgiGet()
-{
-	size_t pos = path.find("?name=");
-	if (pos == std::string::npos)
-		return ; // error
-	std::string name = path.substr(pos + 6);
 
+
+
+void	Response::parseCgiBody(std::string cgi_body)
+{
+	// Trouver la séparation entre en-têtes et contenu
+	size_t header_end = cgi_body.find("\r\n\r\n");
+	if (header_end == std::string::npos)
+	{
+		header_end = cgi_body.find("\n\n");
+		if (header_end == std::string::npos)
+		{
+			_headers["Content-Type"] = "text/html";
+			_body = cgi_body;
+			return;
+		}
+		header_end += 2;
+	}
+	else
+		header_end += 4;
+
+	_body = cgi_body.substr(header_end);
+
+	size_t start = cgi_body.find("Content-Type");
+	size_t end = cgi_body.substr(start).find(";");
+	_headers["Content-Type"] = cgi_body.substr(start, end);
 }
 
+
+void	Response::execCGI(std::string cgi_path, std::vector<char *> envp )
+{
+	int	fd[2];
+	if (pipe(fd) == -1) {
+		_status = 500;
+		badRequest();
+		std::cerr << "Problem with pipe." << std::endl;
+		return ;
+	}
+
+	pid_t pid = fork();
+	if (pid == -1) {
+		_status = 500;
+		badRequest();
+		std::cerr << "Problem with fork" << std::endl;
+		return ;
+	}
+
+	if (pid == 0) // <= enfant
+	{
+		close(fd[0]);
+		dup2(fd[1], STDOUT_FILENO);
+		close(fd[1]);
+
+		char *av[3];
+		if (_isphp)
+		{
+			av[0] = const_cast<char*>(PHP_PATH);
+			av[1] = const_cast<char *>(cgi_path.c_str());
+			av[2] = NULL;
+		}
+		else
+		{
+			av[0] = const_cast<char *>(cgi_path.c_str());
+			av[1] = NULL;
+			av[2] = NULL;
+		}
+		execve(av[0], av, envp.data());
+
+		std::cout << "CGI execution failed" << std::endl; // Que doit on faire ?
+		exit(1);
+	}
+	else // <= parent
+	{
+		close(fd[1]);
+		char buffer[4096];
+		std::string cgi_body;
+		ssize_t nb_read = 1;
+
+		while (nb_read) {
+			nb_read = read(fd[0], buffer, sizeof(buffer));
+			cgi_body.append(buffer, nb_read);
+		}
+		close(fd[0]);
+
+		int status;
+		waitpid(pid, &status, 0);
+
+		_status = 200;
+		parseCgiBody(cgi_body);
+		_headers["Content-Length"] = intToStdString(_body.size());
+	}
+}
+
+void	Response::create_env()
+{
+	std::string method = "REQUEST_METHOD=" + _request->getMethodType();
+	size_t pos = path.find('?');
+	std::string query;
+	if (pos == std::string::npos)
+		query = "";
+	else
+		query = path.substr(pos + 1);
+	std::string query_string = "QUERY_STRING=" + query;
+	std::string real_path = "SCRIPT_NAME=" + path.substr(0, pos);
+	std::string protocol = "SERVER_PROTOCOL=HTTP/1.1";
+
+	_env.push_back(method);
+	_env.push_back(query_string);
+	_env.push_back(real_path);
+	_env.push_back(protocol);
+
+	if (real_path.size() < 4)
+		return ;
+	std::string extension = real_path.substr(real_path.size() - 4);
+	if (extension != ".php")
+		return ;
+	_isphp = true ;
+	_env.push_back("REDIRECT_STATUS=200");
+	_env.push_back(std::string("SCRIPT_FILENAME=") + ABSOLUTE_PATH + "website/api/hello.php");
+}
 
 void	Response::cgi()
 {
-	if (_request->getMethodType() == "GET")
-		cgiGet();
-	else if (_request->getMethodType() == "POST")
-		cgiPost();
-	else
+	if (!isValidCgi())
 		return ;
+	create_env();
+
+	std::vector<char*> envp;
+	for (size_t i = 0; i < _env.size(); ++i) {
+		envp.push_back(const_cast<char*>(_env[i].c_str()));
+	}
+	envp.push_back(NULL);
+
+	size_t pos = path.find('?');
+	if (pos == std::string::npos)
+		pos = path.size();
+	std::string cgi_path = path.substr(0, pos);
+
+	execCGI(cgi_path, envp);
 }
-
-
-
-
-void	Response::cgiPost() {return;}
