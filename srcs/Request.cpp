@@ -60,7 +60,7 @@ Request::Request(std::string &raw, std::vector<char> vec, size_t bufferLen) {
 Response* Request::process(Server* server) {
 	std::string log = _const_method_type + " " + _const_path_to_resource + " " + _const_http_version;
 	std::cout << "\033[35m[TRACE] " << log << "\033[0m" << std::endl;
-	Request *request_copy = new Request(*this); // qui gere le delete ici ?
+	Request *request_copy = new Request(*this);
 	return new Response(request_copy, server, _parsing_error);
 }
 

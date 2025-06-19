@@ -285,7 +285,6 @@ void	Response::setPath()
 	_text_status = "OK";
 	_correctPath = true;
 	_isCGI = false ;
-
 	if (cur_location->cgi_path.empty() == false && cur_location->cgi_extensions.size() > 0)
 	{
 		std::string suffix = _request->getPathToResource().substr(cur_location->path.length());
@@ -299,11 +298,7 @@ void	Response::setPath()
 		if (_request->getPathToResource().substr(cur_location->getPath().length())[0] == '/')
 			trim = 1;
 		path = cur_location->getRoot() + _request->getPathToResource().substr(cur_location->getPath().length() + trim);
-		std::cout << "Le path est : " << path << std::endl;
-		std::cout << "cur_location->getRoot() est : " << cur_location->getRoot() << std::endl;
-		std::cout << "_request->getPathToResource().substr(cur_location->getPath().length()) est : " << _request->getPathToResource().substr(cur_location->getPath().length()) << std::endl;
 	}
-
 	if (path[path.length() - 1] == '/' && cur_location->getAutoIndex() == false)
 		path.append(cur_location->getIndex());
 
@@ -315,7 +310,6 @@ void	Response::setPath()
 			path.append(_request->getPathToResource().substr(_request->getPathToResource().find("=") + 1));
 		}
 	}
-	std::cout << "Le path avant de sortir de set path :" << path << std::endl; // =============================================================================
 	if (_isCGI)
 		return ;
 
@@ -552,8 +546,10 @@ void	Response::Delete()
 
 void	Response::process()
 {
-	if (_badRequest)
+	if (_badRequest) {
 		badRequest();
+		return ;
+	}
 	setPath();
 	if (!_correctPath)
 		return;
@@ -565,6 +561,10 @@ void	Response::process()
 		post();
 	else if (_request->getMethodType() == "DELETE")
 		Delete();
+	else {
+		_status = 405;
+		badRequest();
+	}
 }
 
 std::string Response::getStringResponse() {
