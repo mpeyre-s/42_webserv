@@ -168,6 +168,14 @@ Location::~Location() {}
 Server::Server(std::vector<std::string> confFile) : _default(false) {
 	index = "";
 	host = "";
+	port = 0;
+	root = "";
+	client_max_body_size = 0;
+	auto_index = false;
+	allowed_methods.clear();
+	error_pages.clear();
+	locations.clear();
+
 	// ==================== Default Server parsing ==========================
 	bool reach_end_default = false;
 	size_t actual_line = 0;
