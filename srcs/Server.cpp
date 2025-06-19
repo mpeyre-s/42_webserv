@@ -2,7 +2,17 @@
 
 Location::Location() {}
 
-Location::Location(std::vector<std::string> confFile) {
+Location::Location(std::vector<std::string> confFile) :
+	path(""),
+	root(""),
+	index(""),
+	upload_dir(""),
+	auto_index(false),
+	client_max_body_size(0),
+	cgi_path(""),
+	redirect_code(0),
+	redirect_url("")
+{
 	for (size_t i = 0; i < confFile.size(); i++) {
 		std::vector<std::string> line_token = split(confFile[i], " ");
 		if (line_token.size() < 2)
@@ -40,8 +50,7 @@ Location::Location(std::vector<std::string> confFile) {
 
 		// client_max_body_size
 		if (line_token[0] == "client_max_body_size") {
-			if (!line_token[line_token.size() - 1].empty())
-				line_token[line_token.size() - 1] = line_token[line_token.size() - 1].substr(0, line_token[line_token.size() - 1].length() - 1);
+			line_token[line_token.size() - 1] = line_token[line_token.size() - 1].substr(0, line_token[line_token.size() - 1].length() - 1);
 			if (!client_max_body_size) {
 				int nb = atoi(line_token[1].c_str());
 				if (nb <= MAX_BODY_SIZE && nb > 0)
@@ -195,7 +204,7 @@ Server::Server(std::vector<std::string> confFile) : _default(false) {
 		// root
 		if (line_token[0] == "root") {
 			std::string last_token = line_token[line_token.size() - 1].substr(0, line_token[line_token.size() - 1].length() - 1);
-			if (!last_token.empty() && root.empty() && last_token.length() > 1 && last_token[last_token.length() - 1] == '/') {
+			if (root.empty() && last_token.length() > 1 && last_token[last_token.length() - 1] == '/') {
 				root = last_token;
 				continue;
 			} else
@@ -228,8 +237,7 @@ Server::Server(std::vector<std::string> confFile) : _default(false) {
 
 		// auto_index
 		if (line_token[0] == "auto_index") {
-			if (!line_token[line_token.size() - 1].empty())
-				line_token[line_token.size() - 1] = line_token[line_token.size() - 1].substr(0, line_token[line_token.size() - 1].length() - 1);
+			line_token[line_token.size() - 1] = line_token[line_token.size() - 1].substr(0, line_token[line_token.size() - 1].length() - 1);
 			if (!auto_index) {
 				if (line_token[1] == "on")
 					auto_index = true;
