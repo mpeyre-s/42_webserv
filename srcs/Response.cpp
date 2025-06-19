@@ -141,6 +141,7 @@ Response::Response(Request *request, Server* server, int status, std::vector<Ser
 	unsuported_media_path = "resources/unsuported_media_path.html";
 	forbidden_path = "resources/forbidden.html";
 	method_not_allowed = "resources/method_not_allowed.html";
+	moved_permanently_path = "resources/moved_permanently.html";
 
 	// default params
 	_http_version = "HTTP/1.1";
@@ -363,6 +364,9 @@ void	Response::get()
 	if (cur_location->getRedirectCode() != 0 && !cur_location->getRedirectUrl().empty()) {
 		_status = 301;
 		_headers["Location"] = cur_location->getRedirectUrl();
+		_headers["Content-Type"] = getContentTypeFromPath(moved_permanently_path);
+		_headers["Content-Length"] = intToStdString(getFileOctetsSize(moved_permanently_path));
+		_body = pathfileToStringBackslashs(moved_permanently_path);
 		return;
 	}
 
