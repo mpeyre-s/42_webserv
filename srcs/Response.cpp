@@ -248,6 +248,13 @@ void	Response::badRequest()
 		_headers["Content-Length"] = intToStdString(getFileOctetsSize(forbidden_path));
 		_body = pathfileToStringBackslashs(forbidden_path);
 	}
+	else if (_status == 404)
+	{
+		_text_status = "Not Found";
+		_headers["Content-Type"] = "text/html";
+		_headers["Content-Length"] = intToStdString(getFileOctetsSize(not_found_path));
+		_body = pathfileToStringBackslashs(not_found_path);
+	}
 	else if (_status == 405)
 	{
 		_text_status = "Method not Allowed";
@@ -317,17 +324,15 @@ void	Response::setPath()
 			path.append(_request->getPathToResource().substr(_request->getPathToResource().find("=") + 1));
 		}
 	}
+
 	if (_isCGI)
 		return ;
 
 	//check if path is correct
-	if (isPathOpenable(path) == false) // il faut le mettre dans bad request sinon le process renvoie error 500
+	if (isPathOpenable(path) == false)
 	{
 		_status = 404;
-		_text_status = "Not Found";
-		_headers["Content-Type"] = "text/html";
-		_headers["Content-Length"] = intToStdString(getFileOctetsSize(not_found_path));
-		_body = pathfileToStringBackslashs(not_found_path);
+		badRequest();
 		_correctPath = false;
 	}
 }
