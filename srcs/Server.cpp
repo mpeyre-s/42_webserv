@@ -150,6 +150,19 @@ Location::Location(std::vector<std::string> confFile) {
 			} else
 				throw std::invalid_argument(confFile[i]);
 		}
+
+		// Initialize default values for uninitialized variables at the end of parsing
+		if (root.empty())
+			root = "";
+		if (index.empty())
+			index = "";
+		if (upload_dir.empty())
+			upload_dir = "";
+		if (!client_max_body_size)
+			client_max_body_size = MAX_BODY_SIZE;
+		if (allowed_methods.empty()) {
+			allowed_methods.push_back("GET");
+		}
 	}
 }
 
@@ -283,6 +296,23 @@ Server::Server(std::vector<std::string> confFile) : _default(false) {
 				throw std::invalid_argument(confFile[i]);
 		}
 	}
+	// Initialize default values for uninitialized variables at the end of parsing
+	if (server_name.empty())
+		server_name = "";
+	if (host.empty())
+		host = "";
+	if (!port)
+		port = 0;
+	if (root.empty())
+		root = "";
+	if (index.empty())
+		index = "";
+	if (!client_max_body_size)
+		client_max_body_size = MAX_BODY_SIZE;
+	if (allowed_methods.empty()) {
+		allowed_methods.push_back("GET");
+	}
+
 
 	// if no location return to avoid parse location
 	bool seen = false;
