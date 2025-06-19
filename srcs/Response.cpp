@@ -154,17 +154,20 @@ Response::Response(Request *request, Server* server, int status, std::vector<Ser
 
 	// Logic to find the correct server
 	std::map<std::string, std::string> host_map = _request->getHeaders();
-	std::string fullhost = host_map["Host"];
-	std::string host;
-	int port;
-	size_t end_host = fullhost.find(':');
-	if (end_host != std::string::npos) {
-		host = fullhost.substr(0, end_host);
-		port = std::atoi(fullhost.substr(end_host + 1).c_str());
-	}
-	else {
-		host = fullhost;
-		port = -1;
+	std::string fullhost = "";
+	std::string host = "";
+	int port = -1;
+
+	if (host_map.find("Host") != host_map.end()) {
+		fullhost = host_map["Host"];
+		size_t end_host = fullhost.find(':');
+		if (end_host != std::string::npos) {
+			host = fullhost.substr(0, end_host);
+			port = std::atoi(fullhost.substr(end_host + 1).c_str());
+		}
+		else {
+			host = fullhost;
+		}
 	}
 
 	for (std::vector<Server *>::const_iterator it = _list_servers.begin() ; it != _list_servers.end(); ++it)
