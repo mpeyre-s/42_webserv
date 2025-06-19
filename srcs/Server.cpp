@@ -165,7 +165,7 @@ Location::Location(std::vector<std::string> confFile) :
 
 Location::~Location() {}
 
-Server::Server(std::vector<std::string> confFile) : _default(false) {
+Server::Server(std::vector<std::string> confFile) : _default(false), host(""), index("") {
 	// ==================== Default Server parsing ==========================
 	bool reach_end_default = false;
 	size_t actual_line = 0;
