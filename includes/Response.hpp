@@ -31,6 +31,7 @@ private:
 	Request* _request;
 	Server* _server;
 	Location* cur_location;
+	bool _ownLocation;
 
 
 	// Response

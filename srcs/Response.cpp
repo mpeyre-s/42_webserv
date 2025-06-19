@@ -152,6 +152,7 @@ Response::Response(Request *request, Server* server, int status, std::vector<Ser
 	else
 		_headers["Connection"] = "keep-alive";
 
+
 	// Logic to find the correct server
 	std::map<std::string, std::string> host_map = _request->getHeaders();
 	std::string fullhost = "";
@@ -196,10 +197,14 @@ Response::Response(Request *request, Server* server, int status, std::vector<Ser
 
 	// class instant with all config params for the current endpoint asked
 	std::map<std::string, Location*>::iterator it = locations_nested.find(potential_server);
-	if (it != locations_nested.end() && it->second != NULL)
+	if (it != locations_nested.end() && it->second != NULL) {
 		cur_location = it->second;
-	else
+		_ownLocation = false;
+	}
+	else {
 		cur_location = new Location();
+		 _ownLocation = true;
+	}
 
 	if (potential_server == "/" || potential_server.empty())
 		cur_location->setPath("/");
@@ -629,16 +634,14 @@ std::string Response::getStringResponse() {
 	return result;
 }
 
-Response::~Response() {}
+Response::~Response() {
+	if (_request)
+		delete _request;
 
-
-
-
-
-
-
-
-
+	if (_ownLocation && cur_location) {
+		delete cur_location;
+	}
+}
 
 bool	Response::isValidMethodExtension()
 {

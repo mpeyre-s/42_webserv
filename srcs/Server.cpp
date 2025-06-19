@@ -358,7 +358,12 @@ Server::Server(std::vector<std::string> confFile) : _default(false) {
 	}
 }
 
-Server::~Server() {}
+Server::~Server() {
+	for (std::map<std::string, Location*>::iterator it = locations.begin(); it != locations.end(); ++it) {
+		delete it->second;
+	}
+	locations.clear();
+}
 
 // =================== SERVER GETTERS =======================
 
