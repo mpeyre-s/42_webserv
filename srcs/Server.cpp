@@ -1,6 +1,16 @@
 #include "../includes/Server.hpp"
 
-Location::Location() {}
+Location::Location() :
+	path(""),
+	root(""),
+	index(""),
+	upload_dir(""),
+	auto_index(false),
+	client_max_body_size(-1),
+	cgi_path(""),
+	redirect_code(-1),
+	redirect_url("")
+{}
 
 Location::Location(std::vector<std::string> confFile) :
 	path(""),
