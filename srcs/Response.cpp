@@ -289,6 +289,13 @@ void	Response::badRequest()
 		_body = pathfileToStringBackslashs(unsuported_media_path);
 		return;
 	}
+	else if (_status == 413) {
+		_text_status = "Request Entity Too Large";
+		_headers["Content-Type"] = "text/html";
+		_headers["Content-Length"] = intToStdString(getFileOctetsSize(request_entity_too_large_path));
+		_body = pathfileToStringBackslashs(request_entity_too_large_path);
+		return;
+	}
 	else if (cur_location && (int)_request->getBody().size() > cur_location->getMaxBodySize()) {
 		_status = 413;
 		_text_status = "Request Entity Too Large";
@@ -475,7 +482,6 @@ void		Response::parseBodyBinary(std::vector<char> vec)
 void		Response::parseBodyText(std::istringstream &iss, std::string &line)
 {
 	std::string file_path = cur_location->getUploadDir() + _filename;
-	std::cout << "file path : " << file_path << std::endl;
 	std::ofstream outfile(file_path.c_str());
 	if (!outfile.is_open()) {
 		_status = 500;
@@ -569,6 +575,10 @@ void	Response::Delete()
 
 void	Response::process()
 {
+	if (_request->getBody().length() > (size_t)cur_location->getMaxBodySize()) {
+		_status = 413;
+		_badRequest = true;
+	}
 	if (_badRequest) {
 		badRequest();
 		return ;
