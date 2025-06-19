@@ -211,7 +211,7 @@ Response::Response(Request *request, Server* server, int status, std::vector<Ser
 		cur_location->setRoot(server->getRoot());
 	if (cur_location->getIndex().empty())
 		cur_location->setIndex(server->getIndex());
-	if (!cur_location->getMaxBodySize())
+	if (cur_location->getMaxBodySize() < 0)
 		cur_location->setClientMaxBodySize(server->getMaxBodySize());
 	if (cur_location->getErrorPages().size() == 0)
 		cur_location->setErrorPages(server->getErrorPages());
