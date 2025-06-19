@@ -422,7 +422,7 @@ std::string	Response::checkExtension()
 void		Response::parseBodyBinary(std::vector<char> vec, size_t len)
 {
 	(void)len;
-	std::string file_path = "website/media/" + _filename; // A MODIFER ATTENTION !!!!!!!!!!
+	std::string file_path = cur_location->getUploadDir() + _filename;
 	std::ofstream outfile(file_path.c_str(), std::ios::binary);
 	if (!outfile.is_open()) {
 		_status = 500;
@@ -457,7 +457,7 @@ void		Response::parseBodyBinary(std::vector<char> vec, size_t len)
 
 void		Response::parseBodyText(std::istringstream &iss, std::string &line)
 {
-	std::string file_path = "website/media/" + _filename; // ça serait plus secure de faire une verification pour le "/"
+	std::string file_path = cur_location->getUploadDir() + _filename;
 	std::cout << _filename << " est le filename " << std::endl;
 	std::ofstream outfile(file_path.c_str());
 	if (!outfile.is_open()) {
