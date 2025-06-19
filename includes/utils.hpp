@@ -7,6 +7,9 @@
 #include <string>
 #include <fstream>
 #include <sstream>
+#include <unistd.h>
+#include <fcntl.h>
+#include <cstdlib>
 
 #define MAX_BODY_SIZE 10 // Mo
 
