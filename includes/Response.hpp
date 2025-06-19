@@ -13,6 +13,8 @@
 #include <dirent.h>
 #include <cstring>
 #include <cstdio>
+#include <sys/types.h>
+#include <sys/wait.h>
 
 #include "Server.hpp"
 #include "utils.hpp"

@@ -5,7 +5,7 @@ static std::vector<std::string> generateListingDirectory(std::string &path) {
 	std::vector<std::string> result;
 	DIR *dir;
 	dir = opendir(path.c_str());
-	if (dir != nullptr) {
+	if (dir != NULL) {
 		struct dirent *ent;
 		size_t i = -1;
 		while ((ent = readdir(dir)) != nullptr) {
