@@ -168,7 +168,7 @@ Location::~Location() {}
 Server::Server(std::vector<std::string> confFile) : _default(false) {
 	index = "";
 	host = "";
-	port = 0;
+	port = -1;
 	root = "";
 	client_max_body_size = -1;
 	auto_index = false;
@@ -202,7 +202,7 @@ Server::Server(std::vector<std::string> confFile) : _default(false) {
 		// listen
 		if (line_token[0] == "listen") {
 			line_token[line_token.size() - 1] = line_token[line_token.size() - 1].substr(0, line_token[line_token.size() - 1].length() - 1);
-			if (host.empty() && !port && validIpFormat(line_token[1])) {
+			if (host.empty() && port < 0 && validIpFormat(line_token[1])) {
 				size_t two_points = line_token[1].find(":");
 				host = line_token[1].substr(0, two_points);
 				port = atoi(line_token[1].substr(two_points + 1).c_str());
