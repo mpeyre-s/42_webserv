@@ -170,7 +170,7 @@ Server::Server(std::vector<std::string> confFile) : _default(false) {
 	host = "";
 	port = 0;
 	root = "";
-	client_max_body_size = 0;
+	client_max_body_size = -1;
 	auto_index = false;
 	allowed_methods.clear();
 	error_pages.clear();
@@ -234,7 +234,7 @@ Server::Server(std::vector<std::string> confFile) : _default(false) {
 		// client_max_body_size
 		if (line_token[0] == "client_max_body_size") {
 			line_token[line_token.size() - 1] = line_token[line_token.size() - 1].substr(0, line_token[line_token.size() - 1].length() - 1);
-			if (!client_max_body_size) {
+			if (client_max_body_size < 0) {
 				int nb = atoi(line_token[1].c_str());
 				if (nb <= MAX_BODY_SIZE && nb > 0)
 					client_max_body_size = nb * (1024 * 1024);
