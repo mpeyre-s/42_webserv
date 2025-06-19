@@ -8,7 +8,7 @@ static std::vector<std::string> generateListingDirectory(std::string &path) {
 	if (dir != NULL) {
 		struct dirent *ent;
 		size_t i = -1;
-		while ((ent = readdir(dir)) != nullptr) {
+		while ((ent = readdir(dir)) != NULL) {
 			if (++i > 1)
 				result.push_back(ent->d_name);
 		}
