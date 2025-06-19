@@ -37,6 +37,7 @@ private:
 	std::string	_text_status;
 	std::string	_http_version;
 	std::map<std::string, std::string> _headers;
+	std::vector<Server *> _list_servers;
 	std::string	_filename;
 	std::string	_contentType;
 	std::string _body;
@@ -64,7 +65,7 @@ private:
 
 	std::string	checkHeader();
 	void		parsePostHeader(std::istringstream& iss, std::string& line);
-	void		parseBodyBinary(std::vector<char>, size_t);
+	void		parseBodyBinary(std::vector<char>);
 	void		parseBodyText(std::istringstream& iss, std::string& line);
 	void		setPath();
 	void		parseBody(std::string);
@@ -79,7 +80,7 @@ private:
 
 
 public:
-	Response(Request *request ,Server* server, int status);
+	Response(Request *request ,Server* server, int status, std::vector<Server *>);
 	~Response();
 
 	std::string getStringResponse();

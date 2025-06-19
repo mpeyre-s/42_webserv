@@ -1,9 +1,9 @@
 #include "../includes/Request.hpp"
 #include "../includes/Response.hpp"
 
-Request::Request(std::string &raw, std::vector<char> vec, size_t bufferLen) {
+Request::Request(std::string &raw, std::vector<char> vec, std::vector<Server*> list_servers) {
 	_vec_char = vec;
-	_bufferLen = bufferLen;
+	_list_servers = list_servers;
 	_parsing_error = 200;
 	std::vector<std::string> lines = split(raw, "\r\n");
 
@@ -61,7 +61,7 @@ Response* Request::process(Server* server) {
 	std::string log = _const_method_type + " " + _const_path_to_resource + " " + _const_http_version;
 	std::cout << "\033[35m[TRACE] " << log << "\033[0m" << std::endl;
 	Request *request_copy = new Request(*this);
-	return new Response(request_copy, server, _parsing_error);
+	return new Response(request_copy, server, _parsing_error, _list_servers);
 }
 
 Request &Request::operator=(const Request &other) {
@@ -119,6 +119,3 @@ void	Request::setPathToResource(std::string &new_path) {
 	_path_to_resource = new_path;
 }
 
-size_t	Request::getBufferLen() {
-	return _bufferLen;
-}

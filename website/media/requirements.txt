@@ -1,0 +1,8 @@
+GitPython
+halo
+pexpect
+rich
+toml
+certifi
+packaging
+

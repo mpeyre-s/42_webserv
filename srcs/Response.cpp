@@ -133,7 +133,7 @@ static std::string getDate() {
 	return week_day + ", " + month_day + " " + month + " " + year + " " + time + " GMT";
 }
 
-Response::Response(Request *request, Server* server, int status) : _request(request), _server(server), _status(status) {
+Response::Response(Request *request, Server* server, int status, std::vector<Server *> list_serv) : _request(request), _server(server), _status(status), _list_servers(list_serv) {
 	// default html error pages
 	bad_request_path = "resources/bad_request.html";
 	internal_server_error_path = "resources/internal_server_error.html";
@@ -141,7 +141,7 @@ Response::Response(Request *request, Server* server, int status) : _request(requ
 	request_entity_too_large_path = "resources/request_entity_too_large.html";
 	unsuported_media_path = "resources/unsuported_media_path.html";
 	forbidden_path = "resources/forbidden.html";
-	method_not_allowed = "ressources/method_not_allowed.html";
+	method_not_allowed = "resources/method_not_allowed.html";
 
 	// default params
 	_http_version = "HTTP/1.1";
@@ -151,6 +151,26 @@ Response::Response(Request *request, Server* server, int status) : _request(requ
 		_headers["Connection"] = "close";
 	else
 		_headers["Connection"] = "keep-alive";
+
+	// Logic to find the correct server
+	std::map<std::string, std::string> host_map = _request->getHeaders();
+	std::string fullhost = host_map["Host"];
+	std::string host;
+	size_t end_host = fullhost.find(':');
+	if (end_host != std::string::npos)
+		host = fullhost.substr(0, end_host);
+	else
+		host = fullhost;
+
+	for (std::vector<Server *>::const_iterator it = _list_servers.begin() ; it != _list_servers.end(); ++it)
+	{
+		if (host == (*it)->getServerName())
+		{
+			_server = *it;
+			break;
+		}
+	}
+
 
 	// get server params based on path to ressource request
 	potential_server = "/";
@@ -398,7 +418,6 @@ void Response::parsePostHeader(std::istringstream &iss, std::string &line)
 				start += 10;
 			size_t end = line.find('"', start);
 			_filename = line.substr(start, end - start);
-			std::cout << "filename = " << _filename << std::endl;
 		}
 		else if (line.find("Content-Type:") != std::string::npos)
 		{
@@ -418,9 +437,8 @@ std::string	Response::checkExtension()
 	return NULL;
 }
 
-void		Response::parseBodyBinary(std::vector<char> vec, size_t len)
+void		Response::parseBodyBinary(std::vector<char> vec)
 {
-	(void)len;
 	std::string file_path = cur_location->getUploadDir() + _filename;
 	std::ofstream outfile(file_path.c_str(), std::ios::binary);
 	if (!outfile.is_open()) {
@@ -457,7 +475,7 @@ void		Response::parseBodyBinary(std::vector<char> vec, size_t len)
 void		Response::parseBodyText(std::istringstream &iss, std::string &line)
 {
 	std::string file_path = cur_location->getUploadDir() + _filename;
-	std::cout << _filename << " est le filename " << std::endl;
+	std::cout << "file path : " << file_path << std::endl;
 	std::ofstream outfile(file_path.c_str());
 	if (!outfile.is_open()) {
 		_status = 500;
@@ -499,7 +517,7 @@ void	Response::parseBody(std::string body)
 				return ;
 			}
 			if (isPathFileBinary(extension))
-				parseBodyBinary(_request->getVecChar(), _request->getBufferLen());
+				parseBodyBinary(_request->getVecChar());
 			else
 				parseBodyText(iss, line);
 		}
@@ -511,6 +529,7 @@ void	Response::parseBody(std::string body)
 
 void	Response::post()
 {
+
 	parseBody(_request->getBody());
 
 	if (_status == 200)
@@ -523,7 +542,6 @@ void	Response::post()
 	}
 }
 
-// ================================ DELETE LOGIC =================================
 
 void	Response::Delete()
 {

@@ -132,7 +132,7 @@ void	Webserv::handleClientReading(int fd)
 		client->appendToBuffer(buf, bytes);
 		if (client->getState() == DONE_READING)
 		{
-			Request *request = new Request(client->getBufferIn(), client->getVecChar(), client->getBufferLen());
+			Request *request = new Request(client->getBufferIn(), client->getVecChar(), _list_servers);
 			Response* response = request->process(client->getServer());
 			client->setBufferOut(response->getStringResponse()); // ce n'est pas l'upload qu'on renvoie, c'est la rep ok
 			client->setKeepAlive(request->isKeepAlive());
