@@ -311,7 +311,7 @@ void	Response::setPath()
 		size_t i = path.find("?");
 		if (i != std::string::npos) {
 			path = path.substr(0, i);
-			path.append("/" + _request->getPathToResource().substr(_request->getPathToResource().find("=") + 1));
+			path.append(_request->getPathToResource().substr(_request->getPathToResource().find("=") + 1));
 		}
 	}
 	std::cout << "Le path avant de sortir de set path :" << path << std::endl; // =============================================================================
