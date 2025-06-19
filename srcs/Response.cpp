@@ -3,15 +3,15 @@
 
 static std::vector<std::string> generateListingDirectory(std::string &path) {
 	std::vector<std::string> result;
-	DIR *dir;
-	dir = opendir(path.c_str());
+	DIR *dir = opendir(path.c_str());
 	if (dir != NULL) {
 		struct dirent *ent;
-		size_t i = -1;
 		while ((ent = readdir(dir)) != NULL) {
-			if (++i > 1)
-				result.push_back(ent->d_name);
+			std::string name = ent->d_name;
+			if (name != "." && name != "..")
+				result.push_back(name);
 		}
+		closedir(dir);
 	}
 	return result;
 }
@@ -21,8 +21,7 @@ static std::string generateAutoIndexHtml(const std::string &path, const std::str
 	std::string result;
 	result = "<html>\n<head>\n<title>Index Of " + request_ressource + "</title>\n</head>\n<body>\n<h1>Index Of " + request_ressource + "</h1>\n<ul>\n";
 	result.append("<li><a href=\"../\">Parent Directory</a></li>\n");
-	size_t nb_elements = ls.size();
-	for (size_t i = 0; i < nb_elements; i++) {
+	for (size_t i = 0; i < ls.size(); i++) {
 		result.append("<li><a href=\"" + request_ressource + "/" + ls[i] + "\">" + ls[i] + "</a></li>\n");
 	}
 	result.append("</ul>\n</body>\n</html>");
