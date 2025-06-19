@@ -40,7 +40,8 @@ Location::Location(std::vector<std::string> confFile) {
 
 		// client_max_body_size
 		if (line_token[0] == "client_max_body_size") {
-			line_token[line_token.size() - 1] = line_token[line_token.size() - 1].substr(0, line_token[line_token.size() - 1].length() - 1);
+			if (!line_token[line_token.size() - 1].empty())
+				line_token[line_token.size() - 1] = line_token[line_token.size() - 1].substr(0, line_token[line_token.size() - 1].length() - 1);
 			if (!client_max_body_size) {
 				int nb = atoi(line_token[1].c_str());
 				if (nb <= MAX_BODY_SIZE && nb > 0)
@@ -150,19 +151,6 @@ Location::Location(std::vector<std::string> confFile) {
 			} else
 				throw std::invalid_argument(confFile[i]);
 		}
-
-		// Initialize default values for uninitialized variables at the end of parsing
-		if (root.empty())
-			root = "";
-		if (index.empty())
-			index = "";
-		if (upload_dir.empty())
-			upload_dir = "";
-		if (!client_max_body_size)
-			client_max_body_size = MAX_BODY_SIZE;
-		if (allowed_methods.empty()) {
-			allowed_methods.push_back("GET");
-		}
 	}
 }
 
@@ -207,7 +195,7 @@ Server::Server(std::vector<std::string> confFile) : _default(false) {
 		// root
 		if (line_token[0] == "root") {
 			std::string last_token = line_token[line_token.size() - 1].substr(0, line_token[line_token.size() - 1].length() - 1);
-			if (root.empty() && last_token.length() > 1 && last_token[last_token.length() - 1] == '/') {
+			if (!last_token.empty() && root.empty() && last_token.length() > 1 && last_token[last_token.length() - 1] == '/') {
 				root = last_token;
 				continue;
 			} else
@@ -240,7 +228,8 @@ Server::Server(std::vector<std::string> confFile) : _default(false) {
 
 		// auto_index
 		if (line_token[0] == "auto_index") {
-			line_token[line_token.size() - 1] = line_token[line_token.size() - 1].substr(0, line_token[line_token.size() - 1].length() - 1);
+			if (!line_token[line_token.size() - 1].empty())
+				line_token[line_token.size() - 1] = line_token[line_token.size() - 1].substr(0, line_token[line_token.size() - 1].length() - 1);
 			if (!auto_index) {
 				if (line_token[1] == "on")
 					auto_index = true;
@@ -296,23 +285,6 @@ Server::Server(std::vector<std::string> confFile) : _default(false) {
 				throw std::invalid_argument(confFile[i]);
 		}
 	}
-	// Initialize default values for uninitialized variables at the end of parsing
-	if (server_name.empty())
-		server_name = "";
-	if (host.empty())
-		host = "";
-	if (!port)
-		port = 0;
-	if (root.empty())
-		root = "";
-	if (index.empty())
-		index = "";
-	if (!client_max_body_size)
-		client_max_body_size = MAX_BODY_SIZE;
-	if (allowed_methods.empty()) {
-		allowed_methods.push_back("GET");
-	}
-
 
 	// if no location return to avoid parse location
 	bool seen = false;
