@@ -156,15 +156,20 @@ Response::Response(Request *request, Server* server, int status, std::vector<Ser
 	std::map<std::string, std::string> host_map = _request->getHeaders();
 	std::string fullhost = host_map["Host"];
 	std::string host;
+	int port;
 	size_t end_host = fullhost.find(':');
-	if (end_host != std::string::npos)
+	if (end_host != std::string::npos) {
 		host = fullhost.substr(0, end_host);
-	else
+		port = std::atoi(fullhost.substr(end_host + 1).c_str());
+	}
+	else {
 		host = fullhost;
+		port = -1;
+	}
 
 	for (std::vector<Server *>::const_iterator it = _list_servers.begin() ; it != _list_servers.end(); ++it)
 	{
-		if (host == (*it)->getServerName())
+		if (host == (*it)->getServerName() && port == (*it)->getPort())
 		{
 			_server = *it;
 			break;
