@@ -295,16 +295,17 @@ void	Response::setPath()
 		_isCGI = true ;
 	}
 	else {
-
-	path = cur_location->getRoot() + _request->getPathToResource().substr(cur_location->getPath().length());
-	std::cout << "Le path est : " << path << std::endl;
-	std::cout << "cur_location->getRoot() est : " << cur_location->getRoot() << std::endl;
-	std::cout << "_request->getPathToResource().substr(cur_location->getPath().length()) est : " << _request->getPathToResource().substr(cur_location->getPath().length()) << std::endl;
+		size_t trim = 0;
+		if (_request->getPathToResource().substr(cur_location->getPath().length())[0] == '/')
+			trim = 1;
+		path = cur_location->getRoot() + _request->getPathToResource().substr(cur_location->getPath().length() + trim);
+		std::cout << "Le path est : " << path << std::endl;
+		std::cout << "cur_location->getRoot() est : " << cur_location->getRoot() << std::endl;
+		std::cout << "_request->getPathToResource().substr(cur_location->getPath().length()) est : " << _request->getPathToResource().substr(cur_location->getPath().length()) << std::endl;
 	}
+
 	if (path[path.length() - 1] == '/' && cur_location->getAutoIndex() == false)
 		path.append(cur_location->getIndex());
-	else if (_request->getPathToResource() == potential_server)
-		path.append("/");
 
 	// compose path with filename for delete method
 	if (_request->getMethodType() == "DELETE") {
