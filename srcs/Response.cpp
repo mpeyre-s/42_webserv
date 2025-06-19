@@ -727,7 +727,7 @@ void	Response::parseCgiBody(std::string cgi_body)
 }
 
 
-void	Response::getCGI(std::string cgi_path, std::vector<char *> envp )
+void	Response::getCGI(std::string cgi_path, std::vector<char *> envp)
 {
 	int	fd[2];
 	if (pipe(fd) == -1) {
@@ -829,6 +829,7 @@ void	Response::create_env()
 
 void	Response::cgi()
 {
+	_isphp = false ;
 	if (!isValidMethodExtension() || !isValidCgi())
 	{
 		badRequest();
