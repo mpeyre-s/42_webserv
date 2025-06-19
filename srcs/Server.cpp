@@ -8,9 +8,9 @@ Location::Location(std::vector<std::string> confFile) :
 	index(""),
 	upload_dir(""),
 	auto_index(false),
-	client_max_body_size(0),
+	client_max_body_size(-1),
 	cgi_path(""),
-	redirect_code(0),
+	redirect_code(-1),
 	redirect_url("")
 {
 	for (size_t i = 0; i < confFile.size(); i++) {
@@ -51,7 +51,7 @@ Location::Location(std::vector<std::string> confFile) :
 		// client_max_body_size
 		if (line_token[0] == "client_max_body_size") {
 			line_token[line_token.size() - 1] = line_token[line_token.size() - 1].substr(0, line_token[line_token.size() - 1].length() - 1);
-			if (!client_max_body_size) {
+			if (client_max_body_size < 0) {
 				int nb = atoi(line_token[1].c_str());
 				if (nb <= MAX_BODY_SIZE && nb > 0)
 					client_max_body_size = nb * (1024 * 1024);
@@ -148,7 +148,7 @@ Location::Location(std::vector<std::string> confFile) :
 		// redirect_code
 		if (line_token[0] == "return") {
 			line_token[line_token.size() - 1] = line_token[line_token.size() - 1].substr(0, line_token[line_token.size() - 1].length() - 1);
-			if (!redirect_code && redirect_url.empty() == true) {
+			if (redirect_code < 0 && redirect_url.empty() == true) {
 				int nb = atoi(line_token[1].c_str());
 				if (nb > 300 && nb < 399)
 					redirect_code = nb;
