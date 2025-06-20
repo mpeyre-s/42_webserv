@@ -49,10 +49,10 @@
 
 # ➡️ Screenshots
 
-![Webserv Screenshot](https://github.com/Spike-hd/webserv/blob/main/screenshot.png)
+![Webserv Screenshot](https://github.com/Spike-hd/webserv/blob/main/screen.png)
 
 ---
 
 <div align="center">
-  <p>By Hadrien Duflos (hduflos), Arnaud Fontan (afontan) & Mathis Peyre Schortzen (mpeyre-s). No rights reserved ❌©</p>
+  <p>By Hadrien Duflos (hduflos) & Mathis Peyre Schortzen (mpeyre-s). No rights reserved ❌©</p>
 </div>
