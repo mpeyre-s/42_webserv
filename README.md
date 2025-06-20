@@ -46,7 +46,7 @@
 
 # ➡️ Screenshots
 
-![Webserv Screenshot](https://github.com/mpeyre-s/42_webserv/blob/main/screenshot.png)
+![Webserv Screenshot](https://github.com/mpeyre-s/42_webserv/blob/main/screen.png)
 
 ---
 
