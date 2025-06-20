@@ -636,6 +636,8 @@ std::string Response::getStringResponse() {
 
 Response::~Response()
 {
+	if (_request)
+		delete _request;
 	if (_ownLocation && cur_location) {
 		delete cur_location;
 	}
