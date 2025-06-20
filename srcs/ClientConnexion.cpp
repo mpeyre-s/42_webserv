@@ -1,13 +1,12 @@
 #include "../includes/ClientConnexion.hpp"
 
 ClientConnexion::ClientConnexion(int fd, Server *server, State state) : _fd(fd), _server(server), _state(state), _bodySize(0) {
-	_request = NULL;
 	_start = time(NULL);
 	_timedOut = true;
 }
 
 ClientConnexion::~ClientConnexion() {
-	(void)_fd;
+	_vec_char.clear();
 }
 
 State	ClientConnexion::getState() {
@@ -55,9 +54,9 @@ void	ClientConnexion::setState(State state) {
 	_state = state;
 }
 
-void	ClientConnexion::setRequest(Request *request) {
-	_request = request;
-}
+// void	ClientConnexion::setRequest(Request *request) {
+// 	_request = request;
+// }
 
 void ClientConnexion::setBufferOut(std::string buff) {
 	bufferOut = buff;

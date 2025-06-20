@@ -173,7 +173,11 @@ Location::Location(std::vector<std::string> confFile) :
 	}
 }
 
-Location::~Location() {}
+Location::~Location() {
+	allowed_methods.clear();
+	cgi_extensions.clear();
+	error_pages.clear();
+}
 
 Server::Server(std::vector<std::string> confFile) : _default(false) {
 	index = "";
@@ -359,7 +363,9 @@ Server::Server(std::vector<std::string> confFile) : _default(false) {
 }
 
 Server::~Server() {
-	for (std::map<std::string, Location*>::iterator it = locations.begin(); it != locations.end(); ++it) {
+
+	for (std::map<std::string, Location*>::iterator it = locations.begin(); it != locations.end(); ++it)
+	{
 		delete it->second;
 	}
 	locations.clear();

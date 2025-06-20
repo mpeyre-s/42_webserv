@@ -634,13 +634,13 @@ std::string Response::getStringResponse() {
 	return result;
 }
 
-Response::~Response() {
-	if (_request)
-		delete _request;
-
+Response::~Response()
+{
 	if (_ownLocation && cur_location) {
 		delete cur_location;
 	}
+	_file_types.clear();
+	_env.clear();
 }
 
 bool	Response::isValidMethodExtension()

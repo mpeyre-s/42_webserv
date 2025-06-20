@@ -13,6 +13,7 @@
 #include "ClientConnexion.hpp"
 #include "Request.hpp"
 #include "Response.hpp"
+#include "main.hpp" // <= double inclusion ?
 
 #define TIMEOUT -1 // le delai pour envoyer une requete
 static const size_t BUFFER_SIZE = 2048;

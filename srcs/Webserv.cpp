@@ -6,6 +6,23 @@ Webserv::Webserv(std::vector<Server*> list_servers) : _list_servers(list_servers
 
 Webserv::~Webserv() {
 	std::cout << "\033[32m[INFO] Server is killed\033[0m" << std::endl;
+
+	// Fermer fds
+	for (std::vector<pollfd>::iterator it = _fds.begin(); it != _fds.end(); ++it) {
+		close(it->fd);
+	}
+
+	// Supprimer tous les clients
+	for (std::map<int, ClientConnexion*>::iterator it = _clients.begin(); it != _clients.end(); ++it) {
+		delete it->second;
+	}
+	_clients.clear();
+
+	// clear les maps / vecteurs attention a bien delete les servers
+	_list_servers.clear();
+	_correspondingServ.clear();
+	_tempFds.clear();
+	_fds.clear();
 }
 
 // Cette fonction sert à créer et set-up les fds correspondant à chaque virtual host
@@ -267,6 +284,13 @@ void Webserv::timeoutPoll()
 	}
 }
 
+void Webserv::negativPoll()
+{
+	std::cerr << "\033[1;31m[Error] poll() failed:\033[1m" << strerror(errno) << "\033[0m" << std::endl;
+
+	exit(EXIT_FAILURE);
+}
+
 void Webserv::run()
 {
 	std::cout << "\033[32m[INFO] Server is running\033[0m" <<std::endl;
@@ -274,11 +298,16 @@ void Webserv::run()
 	prepareSockets();
 	prepareFd();
 
-	while (1)
+	while (!g_stop)
 	{
 		int res = poll(_fds.data(), _fds.size(), TIMEOUT);
 		if (res < 0)
-			negativPoll();
+		{
+			if (errno == EINTR)
+				continue;
+			else
+				negativPoll();
+		}
 		else if (res == TIMEOUT)
 			timeoutPoll();
 		else
@@ -286,7 +315,5 @@ void Webserv::run()
 	}
 }
 
-void Webserv::negativPoll() {
-	return ;
-}
+
 

@@ -76,7 +76,9 @@ Request &Request::operator=(const Request &other) {
 	return *this;
 }
 
-Request::~Request() {}
+Request::~Request() {
+	_headers.clear();
+}
 
 std::string Request::getMethodType() const {
 	return _method_type;

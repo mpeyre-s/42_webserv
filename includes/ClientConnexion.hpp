@@ -35,7 +35,7 @@ class ClientConnexion
 		bool		_timedOut;
 		bool		keep_alive;
 
-		Request		*_request;
+		//Request		*_request;
 
 		bool	isDoneReading();
 		bool 	isDoneWriting();

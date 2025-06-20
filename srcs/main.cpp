@@ -81,7 +81,19 @@ void printServerVector(const std::vector<Server*>& servers) {
 	std::cout << "\n===============================" << std::endl;
 }
 
+
+
+
+volatile sig_atomic_t g_stop = 0;
+
+void handleSigint(int signum) {
+	(void)signum;
+	g_stop = 1;
+}
+
+
 int main(int ac, char **av) {
+	std::signal(SIGINT, handleSigint);
 	if (ac == 2) {
 		try {
 			std::string configFile = av[1];
