@@ -4,6 +4,9 @@
   <br>
 </div>
 
+[project overview](https://youtu.be/P1KGZtusCWI)
+
+
 # 🎯 Project Objectives
 
 - Implement an HTTP web server
@@ -46,10 +49,11 @@
 
 # ➡️ Screenshots
 
-![Webserv Screenshot](https://github.com/mpeyre-s/42_webserv/blob/main/screen.png)
+![Webserv Screenshot](https://github.com/Spike-hd/webserv/blob/main/screen.png)
+
 
 ---
 
 <div align="center">
-  <p>By Hadrien Duflos (hduflos), Arnaud Fontan (afontan) & Mathis Peyre Schortzen (mpeyre-s). No rights reserved ❌©</p>
+  <p>By Hadrien Duflos (hduflos) & Mathis Peyre Schortzen (mpeyre-s). No rights reserved ❌©</p>
 </div>
