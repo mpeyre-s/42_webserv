@@ -9,7 +9,7 @@
 #include "utils.hpp"
 
 class Response;
-struct serverGroup;
+
 
 class Request {
 private:

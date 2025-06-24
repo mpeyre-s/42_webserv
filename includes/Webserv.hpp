@@ -14,6 +14,7 @@
 #include "Request.hpp"
 #include "Response.hpp"
 #include "main.hpp" // <= double inclusion ?
+#include "utils.hpp"
 
 #define TIMEOUT -1 // le delai pour envoyer une requete
 static const size_t BUFFER_SIZE = 2048;
@@ -32,13 +33,7 @@ struct FdInfo
 	sockaddr_in	addr;
 };
 
-struct serverGroup {
-	std::vector<Server*> list_server;
-	size_t nb_server;
-	std::string ip;
-	int port;
-	int fd;
-};
+
 
 class Webserv {
 	private:

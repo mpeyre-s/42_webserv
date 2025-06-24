@@ -26,6 +26,8 @@ static const size_t BUFFER_SIZES = 2048;
 
 class Request;
 
+
+
 class Response {
 private:
 	Request* _request;

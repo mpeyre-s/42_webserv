@@ -47,6 +47,12 @@ Webserv::~Webserv() {
 	_correspondingServ.clear();
 	_tempFds.clear();
 	_fds.clear();
+	for (size_t i = 0; i < _server_group.size(); i++)
+	{
+		if (!_server_group[i].list_server.empty())
+			_server_group[i].list_server.clear();
+	}
+	_server_group.clear();
 }
 
 // Cette fonction sert à créer et set-up les fds correspondant à chaque virtual host
@@ -60,6 +66,8 @@ void Webserv::prepareSockets()
 		ep.fd = socket(AF_INET, SOCK_STREAM, 0);
 		if (ep.fd < 0)
 			throw std::runtime_error("Erreur lors de la création du socket");
+
+		_server_group[i].fd = ep.fd;
 
 		// Fctnl pour que les sockets soient non bloquantes
 		fcntl(ep.fd, F_SETFL, O_NONBLOCK);
@@ -90,14 +98,12 @@ void Webserv::prepareSockets()
 		std::cerr << "Erreur bind sur IP " << host << ": " << strerror(errno) << std::endl;
 		throw std::runtime_error("Erreur lors du bind");
 	}
-
-
-		// Listen
+	// Listen
 		if (listen(ep.fd, SOMAXCONN) < 0)
 			throw std::runtime_error("Erreur listen");
 
 		_tempFds.push_back(ep);
-		_correspondingServ[ep.fd] = _list_servers[i]; // === faut le delete nan ? en fait faut faire une fonction pour le gerer a part
+
 	}
 }
 
@@ -151,6 +157,7 @@ void Webserv::handleNewConnexion(int server_fd)
 
 	// Création de l'instance de la class ClientConnexion pour gérer ce nouveau client
 	// il va falloir envoyer la liste de serveur car on va devoir gerer le bon serveur correspondant
+	std::cout << "serv name = " <<  _correspondingServ[server_fd]->getHost() << std::endl;
 	ClientConnexion *client = new ClientConnexion(client_fd, _correspondingServ[server_fd], TO_READ); // ======= on a pas un pb ici ?
 	_clients[client_fd] = client;
 }
@@ -315,12 +322,14 @@ void Webserv::negativPoll()
 	exit(EXIT_FAILURE);
 }
 
+
 void Webserv::run()
 {
 	std::cout << "\033[32m[INFO] Server is running\033[0m" <<std::endl;
 
 	prepareSockets();
 	prepareFd();
+	initCorrespondingServ();
 
 	while (!g_stop)
 	{
@@ -342,5 +351,6 @@ void Webserv::run()
 void Webserv::initCorrespondingServ() {
 	for (size_t i = 0; i < _server_group.size(); i++) {
 		_correspondingServ[_server_group[i].fd] = _server_group[i].list_server[0];
+
 	}
 }

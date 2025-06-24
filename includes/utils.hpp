@@ -12,6 +12,15 @@
 #include <cstdlib>
 
 #define MAX_BODY_SIZE 10 // Mo
+class Server;
+
+struct serverGroup {
+	std::vector<Server*> list_server;
+	size_t nb_server;
+	std::string ip;
+	int port;
+	int fd;
+};
 
 std::vector<std::string> split(const std::string &str, std::string delimiter);
 bool validIpFormat(std::string &str);

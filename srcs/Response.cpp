@@ -171,13 +171,20 @@ Response::Response(Request *request, Server* server, int status,  std::vector<se
 		}
 	}
 	// logique pour trouver la bonne structure qui contient le vecteur de structures
-
-	for (std::vector<Server *>::const_iterator it = _list_servers.begin() ; it != _list_servers.end(); ++it)
+	std::vector<Server *> _list_servers;
+	for (size_t i = 0; i < _grp_servers.size(); i++) {
+		if (_grp_servers[i].ip == _server->getHost())
+			_list_servers = _grp_servers[i].list_server;
+	}
+	if (!_list_servers.empty())
 	{
-		if (host == (*it)->getServerName() && port == (*it)->getPort())
+		for (std::vector<Server *>::const_iterator it = _list_servers.begin() ; it != _list_servers.end(); ++it)
 		{
-			_server = *it;
-			break;
+			if (host == (*it)->getServerName() && port == (*it)->getPort())
+			{
+				_server = *it;
+				break;
+			}
 		}
 	}
 
