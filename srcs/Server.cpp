@@ -238,7 +238,12 @@ Server::Server(std::vector<std::string> confFile) : _default(false) {
 		// listen
 		if (line_token[0] == "listen") {
 			line_token[line_token.size() - 1] = line_token[line_token.size() - 1].substr(0, line_token[line_token.size() - 1].length() - 1);
-			if (host.empty() && port < 0 && validIpFormat(line_token[1])) {
+			if (line_token[1].length() == 4 && atoi(line_token[1].c_str()) >= 1 && atoi(line_token[1].c_str()) <= 65535) {
+				host = "0.0.0.0";
+				port = atoi(line_token[1].c_str());
+				continue;
+			}
+			else if (host.empty() && port < 0 && validIpFormat(line_token[1])) {
 				size_t two_points = line_token[1].find(":");
 				host = line_token[1].substr(0, two_points);
 				port = atoi(line_token[1].substr(two_points + 1).c_str());
