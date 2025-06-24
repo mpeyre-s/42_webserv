@@ -85,7 +85,7 @@ void Webserv::prepareSockets()
 
 	std::string host = _server_group[i].ip;
 
-	if (host.empty() || host == "0.0.0.0" || i == 0) {
+	if (host.empty() || host == "0.0.0.0") {
 		ep.addr.sin_addr.s_addr = htonl(INADDR_ANY);
 	} else {
 		int ret = inet_pton(AF_INET, host.c_str(), &ep.addr.sin_addr);
