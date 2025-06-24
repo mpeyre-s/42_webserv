@@ -1,6 +1,30 @@
 #include "../includes/Webserv.hpp"
 
 Webserv::Webserv(std::vector<Server*> list_servers) : _list_servers(list_servers) {
+	for (size_t i = 0; i < _list_servers.size(); i++) {
+		bool ip_already_in_struct = false;
+		size_t j = 0;
+		for (; j < _server_group.size(); j++) {
+			if (_server_group[j].ip == _list_servers[i]->getHost() && _server_group[j].port == _list_servers[i]->getPort()) {
+				ip_already_in_struct = true;
+				break;
+			}
+		}
+		if (ip_already_in_struct) {
+			_server_group[j].list_server.push_back(_list_servers[i]);
+			_server_group[j].nb_server++;
+		}
+		else {
+			serverGroup new_group;
+			new_group.ip = _list_servers[i]->getHost();
+			new_group.port = _list_servers[i]->getPort();
+			new_group.nb_server = 1;
+			new_group.list_server.push_back(_list_servers[i]);
+			new_group.fd = 0;
+			_server_group.push_back(new_group);
+		}
+	}
+
 	std::cout << "\033[32m[INFO] Server is ready to run\033[0m" << std::endl;
 }
 
