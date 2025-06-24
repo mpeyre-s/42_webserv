@@ -53,7 +53,7 @@ private:
 	std::string request_entity_too_large_path;
 	std::string unsuported_media_path;
 	std::string forbidden_path;
-	std::string method_not_allowed;
+	std::string method_not_allowed_path;
 	std::string moved_permanently_path;
 
 	std::map<std::string, std::string> _file_types; // ext -> content type
