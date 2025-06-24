@@ -1,9 +1,9 @@
 #include "../includes/Request.hpp"
 #include "../includes/Response.hpp"
 
-Request::Request(std::string &raw, std::vector<char> vec, std::vector<Server*> list_servers) {
+Request::Request(std::string &raw, std::vector<char> vec, std::vector<serverGroup> server_group) {
 	_vec_char = vec;
-	_list_servers = list_servers;
+	_list_servers = server_group;
 	_parsing_error = 200;
 	std::vector<std::string> lines = split(raw, "\r\n");
 

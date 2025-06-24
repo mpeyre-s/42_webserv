@@ -28,7 +28,7 @@ Webserv::~Webserv() {
 // Cette fonction sert à créer et set-up les fds correspondant à chaque virtual host
 void Webserv::prepareSockets()
 {
-	for (size_t i = 0; i < _list_servers.size(); ++i)
+	for (size_t i = 0; i < _server_group.size(); ++i)
 	{
 		struct FdInfo ep;
 
@@ -48,10 +48,10 @@ void Webserv::prepareSockets()
 		// Initialisation de sockaddr_in pour Bind
 		std::memset(&ep.addr, 0, sizeof(ep.addr));
 		ep.addr.sin_family = AF_INET;
-		ep.addr.sin_port = htons(_list_servers[i]->getPort());
+		ep.addr.sin_port = htons(_server_group[i].port);
 
 
-	std::string host = _list_servers[i]->getHost();
+	std::string host = _server_group[i].ip;
 
 	if (host.empty() || host == "0.0.0.0") {
 		ep.addr.sin_addr.s_addr = htonl(INADDR_ANY);
@@ -73,7 +73,7 @@ void Webserv::prepareSockets()
 			throw std::runtime_error("Erreur listen");
 
 		_tempFds.push_back(ep);
-		_correspondingServ[ep.fd] = _list_servers[i];
+		_correspondingServ[ep.fd] = _list_servers[i]; // === faut le delete nan ? en fait faut faire une fonction pour le gerer a part
 	}
 }
 
@@ -127,7 +127,7 @@ void Webserv::handleNewConnexion(int server_fd)
 
 	// Création de l'instance de la class ClientConnexion pour gérer ce nouveau client
 	// il va falloir envoyer la liste de serveur car on va devoir gerer le bon serveur correspondant
-	ClientConnexion *client = new ClientConnexion(client_fd, _correspondingServ[server_fd], TO_READ);
+	ClientConnexion *client = new ClientConnexion(client_fd, _correspondingServ[server_fd], TO_READ); // ======= on a pas un pb ici ?
 	_clients[client_fd] = client;
 }
 
@@ -149,7 +149,7 @@ void	Webserv::handleClientReading(int fd)
 		client->appendToBuffer(buf, bytes);
 		if (client->getState() == DONE_READING)
 		{
-			Request *request = new Request(client->getBufferIn(), client->getVecChar(), _list_servers);
+			Request *request = new Request(client->getBufferIn(), client->getVecChar(), _server_group);
 			Response* response = request->process(client->getServer());
 			client->setBufferOut(response->getStringResponse()); // ce n'est pas l'upload qu'on renvoie, c'est la rep ok
 			client->setKeepAlive(request->isKeepAlive());
