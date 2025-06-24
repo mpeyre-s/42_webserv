@@ -132,7 +132,7 @@ static std::string getDate() {
 	return week_day + ", " + month_day + " " + month + " " + year + " " + time + " GMT";
 }
 
-Response::Response(Request *request, Server* server, int status, std::vector<Server *> list_serv) : _request(request), _server(server), _status(status), _list_servers(list_serv) {
+Response::Response(Request *request, Server* server, int status,  std::vector<serverGroup> list_serv) : _request(request), _server(server), _status(status), _grp_servers(list_serv) {
 	// default html error pages
 	bad_request_path = "resources/bad_request.html";
 	internal_server_error_path = "resources/internal_server_error.html";
@@ -170,6 +170,7 @@ Response::Response(Request *request, Server* server, int status, std::vector<Ser
 			host = fullhost;
 		}
 	}
+	// logique pour trouver la bonne structure qui contient le vecteur de structures
 
 	for (std::vector<Server *>::const_iterator it = _list_servers.begin() ; it != _list_servers.end(); ++it)
 	{

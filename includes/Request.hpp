@@ -9,6 +9,7 @@
 #include "utils.hpp"
 
 class Response;
+struct serverGroup;
 
 class Request {
 private:
@@ -21,14 +22,14 @@ private:
 	std::map<std::string, std::string> _headers;
 	std::string _body;
 	std::vector<char> _vec_char;
-	std::vector<Server *> _list_servers;
+	std::vector<serverGroup> _list_servers;
 
 	std::string _const_method_type;
 	std::string _const_path_to_resource;
 	std::string _const_http_version;
 
 public:
-	Request(std::string &raw, std::vector<char>, std::vector<Server*>);
+	Request(std::string &raw, std::vector<char>,  std::vector<serverGroup>);
 	~Request();
 
 	Request &operator=(const Request &other);

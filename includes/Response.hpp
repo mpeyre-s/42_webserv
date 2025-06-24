@@ -40,7 +40,7 @@ private:
 	std::string	_text_status;
 	std::string	_http_version;
 	std::map<std::string, std::string> _headers;
-	std::vector<Server *> _list_servers;
+	std::vector<serverGroup> _grp_servers;
 	std::string	_filename;
 	std::string	_contentType;
 	std::string _body;
@@ -84,7 +84,7 @@ private:
 
 
 public:
-	Response(Request *request ,Server* server, int status, std::vector<Server *>);
+	Response(Request *request ,Server* server, int status, std::vector<serverGroup>);
 	~Response();
 
 	std::string getStringResponse();
