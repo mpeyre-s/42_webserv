@@ -339,5 +339,8 @@ void Webserv::run()
 	}
 }
 
-
-
+void Webserv::initCorrespondingServ() {
+	for (size_t i = 0; i < _server_group.size(); i++) {
+		_correspondingServ[_server_group[i].fd] = _server_group[i].list_server[0];
+	}
+}

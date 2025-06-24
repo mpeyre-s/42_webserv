@@ -71,6 +71,7 @@ class Webserv {
 		void	timeoutPoll();
 
 
+		void initCorrespondingServ();
 
 	public:
 		Webserv(std::vector<Server*> list_servers);
