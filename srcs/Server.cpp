@@ -1,5 +1,23 @@
 #include "../includes/Server.hpp"
 
+static bool dirOpenable(std::string &path) {
+	DIR *dir = opendir(path.c_str());
+	if (dir) {
+		closedir(dir);
+		return true;
+	}
+	return false;
+}
+
+static bool fileOpenable(std::string &path) {
+	std::ifstream file(path.c_str());
+	if (file.is_open()) {
+		file.close();
+		return true;
+	}
+	return false;
+}
+
 Location::Location() :
 	path(""),
 	root(""),
@@ -31,7 +49,7 @@ Location::Location(std::vector<std::string> confFile) :
 		// root
 		if (line_token[0] == "root") {
 			std::string last_token = line_token[line_token.size() - 1].substr(0, line_token[line_token.size() - 1].length() - 1);
-			if (root.empty() && last_token.length() > 1 && last_token[last_token.length() - 1] == '/') {
+			if (root.empty() && last_token.length() > 1 && last_token[last_token.length() - 1] == '/' && dirOpenable(last_token)) {
 				root = last_token;
 				continue;
 			} else
@@ -51,7 +69,7 @@ Location::Location(std::vector<std::string> confFile) :
 		// upload_dir
 		if (line_token[0] == "upload_dir") {
 			std::string last_token = line_token[line_token.size() - 1].substr(0, line_token[line_token.size() - 1].length() - 1);
-			if (upload_dir.empty() && last_token.length() > 1 && last_token[last_token.length() - 1] == '/') {
+			if (upload_dir.empty() && last_token.length() > 1 && last_token[last_token.length() - 1] == '/' && dirOpenable(last_token)) {
 				upload_dir = last_token;
 				continue;
 			} else
@@ -78,8 +96,10 @@ Location::Location(std::vector<std::string> confFile) :
 			if (!auto_index) {
 				if (line_token[1] == "on")
 					auto_index = true;
-				else
+				else if (line_token[1] == "off")
 					auto_index = false;
+				else
+					throw std::invalid_argument(confFile[i]);
 				continue;
 			} else
 				throw std::invalid_argument(confFile[i]);
@@ -124,6 +144,8 @@ Location::Location(std::vector<std::string> confFile) :
 					throw std::invalid_argument(confFile[i]);
 				if (error_pages.find(error_code) != error_pages.end())
 					throw std::invalid_argument(confFile[i]);
+				if (fileOpenable(line_token[2]) == false)
+					throw std::invalid_argument(confFile[i]);
 				error_pages[error_code] = line_token[2];
 				continue;
 			} else
@@ -148,7 +170,7 @@ Location::Location(std::vector<std::string> confFile) :
 		// cgi_path
 		if (line_token[0] == "cgi_path") {
 			std::string last_token = line_token[line_token.size() - 1].substr(0, line_token[line_token.size() - 1].length() - 1);
-			if (cgi_path.empty() && last_token.length() > 1 && last_token[last_token.length() - 1] == '/') {
+			if (cgi_path.empty() && last_token.length() > 1 && last_token[last_token.length() - 1] == '/' && dirOpenable(last_token)) {
 				cgi_path = last_token;
 				continue;
 			} else
@@ -160,7 +182,7 @@ Location::Location(std::vector<std::string> confFile) :
 			line_token[line_token.size() - 1] = line_token[line_token.size() - 1].substr(0, line_token[line_token.size() - 1].length() - 1);
 			if (redirect_code < 0 && redirect_url.empty() == true) {
 				int nb = atoi(line_token[1].c_str());
-				if (nb > 300 && nb < 399)
+				if (nb >= 300 && nb <= 308)
 					redirect_code = nb;
 				else
 					throw std::invalid_argument(confFile[i]);
@@ -216,7 +238,12 @@ Server::Server(std::vector<std::string> confFile) : _default(false) {
 		// listen
 		if (line_token[0] == "listen") {
 			line_token[line_token.size() - 1] = line_token[line_token.size() - 1].substr(0, line_token[line_token.size() - 1].length() - 1);
-			if (host.empty() && port < 0 && validIpFormat(line_token[1])) {
+			if (line_token[1].length() == 4 && atoi(line_token[1].c_str()) >= 1 && atoi(line_token[1].c_str()) <= 65535) {
+				host = "0.0.0.0";
+				port = atoi(line_token[1].c_str());
+				continue;
+			}
+			else if (host.empty() && port < 0 && validIpFormat(line_token[1])) {
 				size_t two_points = line_token[1].find(":");
 				host = line_token[1].substr(0, two_points);
 				port = atoi(line_token[1].substr(two_points + 1).c_str());
@@ -228,7 +255,7 @@ Server::Server(std::vector<std::string> confFile) : _default(false) {
 		// root
 		if (line_token[0] == "root") {
 			std::string last_token = line_token[line_token.size() - 1].substr(0, line_token[line_token.size() - 1].length() - 1);
-			if (root.empty() && last_token.length() > 1 && last_token[last_token.length() - 1] == '/') {
+			if (root.empty() && last_token.length() > 1 && last_token[last_token.length() - 1] == '/' && dirOpenable(last_token)) {
 				root = last_token;
 				continue;
 			} else
@@ -265,8 +292,10 @@ Server::Server(std::vector<std::string> confFile) : _default(false) {
 			if (!auto_index) {
 				if (line_token[1] == "on")
 					auto_index = true;
-				else
+				else if (line_token[1] == "off")
 					auto_index = false;
+				else
+					throw std::invalid_argument(confFile[i]);
 				continue;
 			} else
 				throw std::invalid_argument(confFile[i]);
@@ -310,6 +339,8 @@ Server::Server(std::vector<std::string> confFile) : _default(false) {
 				if (checkFileExtension(line_token[2], ".html") == false)
 					throw std::invalid_argument(confFile[i]);
 				if (error_pages.find(error_code) != error_pages.end())
+					throw std::invalid_argument(confFile[i]);
+				if (fileOpenable(line_token[2]) == false)
 					throw std::invalid_argument(confFile[i]);
 				error_pages[error_code] = line_token[2];
 				continue;

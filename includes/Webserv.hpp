@@ -32,9 +32,18 @@ struct FdInfo
 	sockaddr_in	addr;
 };
 
+struct serverGroup {
+	std::vector<Server*> list_server;
+	size_t nb_server;
+	std::string ip;
+	int port;
+	int fd;
+};
+
 class Webserv {
 	private:
 		std::vector<Server*>	_list_servers;
+		std::vector<serverGroup> _server_group;
 		std::map<int, Server *> _correspondingServ;
 		std::vector<FdInfo>		_tempFds;
 		std::vector<pollfd>		_fds;

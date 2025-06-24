@@ -140,7 +140,7 @@ Response::Response(Request *request, Server* server, int status, std::vector<Ser
 	request_entity_too_large_path = "resources/request_entity_too_large.html";
 	unsuported_media_path = "resources/unsuported_media_path.html";
 	forbidden_path = "resources/forbidden.html";
-	method_not_allowed = "resources/method_not_allowed.html";
+	method_not_allowed_path = "resources/method_not_allowed.html";
 	moved_permanently_path = "resources/moved_permanently.html";
 
 	// default params
@@ -237,6 +237,16 @@ Response::Response(Request *request, Server* server, int status, std::vector<Ser
 	if (cur_location->getErrorPages().find(403) != cur_location->getErrorPages().end())
 		forbidden_path = current_error_pages[403];
 
+	// Check Method available
+	std::string Method = _request->getMethodType();
+	std::vector<std::string>::iterator it2 = cur_location->allowed_methods.begin();
+	for (; it2 != cur_location->allowed_methods.end(); ++it2) {
+		if (*it2 == Method)
+			break ;
+	}
+	if (it2 == cur_location->allowed_methods.end()) {
+		_status = 405;
+	}
 
 	//check if status is bad request
 	if (_status != 200)
@@ -292,8 +302,8 @@ void	Response::badRequest()
 	{
 		_text_status = "Method not Allowed";
 		_headers["Content-Type"] = "text/html";
-		_headers["Content-Length"] = intToStdString(getFileOctetsSize(forbidden_path));
-		_body = pathfileToStringBackslashs(forbidden_path);
+		_headers["Content-Length"] = intToStdString(getFileOctetsSize(method_not_allowed_path));
+		_body = pathfileToStringBackslashs(method_not_allowed_path);
 	}
 	else if (_status == 415) {
 		_text_status = "Unsupported Media Type";
