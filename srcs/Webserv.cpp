@@ -157,7 +157,6 @@ void Webserv::handleNewConnexion(int server_fd)
 
 	// Création de l'instance de la class ClientConnexion pour gérer ce nouveau client
 	// il va falloir envoyer la liste de serveur car on va devoir gerer le bon serveur correspondant
-	std::cout << "serv name = " <<  _correspondingServ[server_fd]->getHost() << std::endl;
 	ClientConnexion *client = new ClientConnexion(client_fd, _correspondingServ[server_fd], TO_READ); // ======= on a pas un pb ici ?
 	_clients[client_fd] = client;
 }
